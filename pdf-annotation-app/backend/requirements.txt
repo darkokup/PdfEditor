@@ -1,0 +1,6 @@
+flask==2.3.3
+flask-cors==4.0.0
+pypdf==3.17.1
+reportlab==4.0.4
+pillow==10.0.0
+python-multipart==0.0.6

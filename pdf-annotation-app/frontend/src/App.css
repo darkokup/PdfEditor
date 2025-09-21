@@ -1,0 +1,265 @@
+/* App Layout */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #282c34;
+  color: white;
+  border-bottom: 1px solid #444;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.header-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.upload-btn,
+.save-btn,
+.print-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007acc;
+  color: white;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.upload-btn:hover,
+.save-btn:hover,
+.print-btn:hover {
+  background-color: #005a9e;
+}
+
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 300px;
+  background-color: #f5f5f5;
+  border-right: 1px solid #ddd;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.main-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Project Manager Styles */
+.project-manager {
+  margin-bottom: 2rem;
+}
+
+.project-manager h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.project-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.project-btn {
+  padding: 0.5rem;
+  border: 1px solid #007acc;
+  background-color: #007acc;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.project-btn:hover {
+  background-color: #005a9e;
+}
+
+.project-btn:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+.project-list {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.project-list h4 {
+  margin: 0 0 1rem 0;
+}
+
+.project-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.project-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.project-item:last-child {
+  border-bottom: none;
+}
+
+.project-info {
+  flex: 1;
+}
+
+.project-info strong {
+  display: block;
+  color: #333;
+}
+
+.project-info small {
+  color: #666;
+}
+
+.project-item button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #007acc;
+  background-color: #007acc;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.project-item button:hover {
+  background-color: #005a9e;
+}
+
+/* Control Palette Styles */
+.control-palette {
+  margin-bottom: 2rem;
+}
+
+.control-palette h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.control-btn {
+  padding: 0.75rem;
+  border: 1px solid #28a745;
+  background-color: #28a745;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+}
+
+.control-btn:hover {
+  background-color: #218838;
+}
+
+.control-btn.text-control {
+  border-color: #17a2b8;
+  background-color: #17a2b8;
+}
+
+.control-btn.text-control:hover {
+  background-color: #138496;
+}
+
+.control-btn.date-control {
+  border-color: #ffc107;
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.control-btn.date-control:hover {
+  background-color: #e0a800;
+}
+
+/* Project Info Styles */
+.project-info {
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.project-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.project-info p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Add Control Mode Styles */
+.add-control-mode {
+  padding: 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.add-control-mode p {
+  margin: 0 0 0.5rem 0;
+  color: #856404;
+  font-weight: bold;
+}
+
+.add-control-mode button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #dc3545;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.add-control-mode button:hover {
+  background-color: #c82333;
+}

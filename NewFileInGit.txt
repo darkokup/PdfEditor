@@ -1,0 +1,10 @@
+Some new File added in GitHub -- I wanted to Add this
+-- Change 1 added in MyCodeChangeBranch
+-- Added in commit 6
+-- Added in commit 7
+-- Added on PC 9/6 --1 and -- Edit on git 9/6 -- 1
+-- only in RX-99 (+1)(+2)
+
+-- some local add in 99
+-- new start added in git to RX-99
+-- now I have something to change in my local RX-99 branch

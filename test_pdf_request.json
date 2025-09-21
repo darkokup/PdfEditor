@@ -1,0 +1,16 @@
+{
+  "pdf_data": "JVBERi0xLjQKJcfsj6IKNSAwIG9iago8PAovTGVuZ3RoIDYgMCBSCi9GaWx0ZXIgL0ZsYXRlRGVjb2RlCj4+CnN0cmVhbQp4nDPQM1Qo5ypUKEktLlEwVAjPTUxOzNFQ8NQPMNdQAClBhYIDkFBVqACz", 
+  "annotations": [
+    {
+      "id": "test-1", 
+      "type": "text", 
+      "x": 100, 
+      "y": 100, 
+      "width": 120, 
+      "height": 30, 
+      "page": 1, 
+      "value": "Test Annotation", 
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}

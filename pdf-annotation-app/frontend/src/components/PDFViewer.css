@@ -1,0 +1,264 @@
+/* PDF Viewer Styles */
+.pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.pdf-viewer-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  margin: 20px;
+}
+
+.placeholder-content {
+  text-align: center;
+  color: #666;
+}
+
+.pdf-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.navigation-controls,
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navigation-controls button,
+.zoom-controls button {
+  padding: 8px 16px;
+  border: 1px solid #007acc;
+  background-color: #007acc;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.navigation-controls button:hover,
+.zoom-controls button:hover {
+  background-color: #005a9e;
+}
+
+.navigation-controls button:disabled,
+.zoom-controls button:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pdf-container {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  background-color: #f0f0f0;
+}
+
+.pdf-page-wrapper {
+  position: relative;
+  display: inline-block;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Annotation Overlay Styles */
+.annotation-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.annotation-overlay.drop-active {
+  background-color: rgba(0, 122, 204, 0.1);
+  border: 2px dashed #007acc;
+}
+
+.annotation-overlay > * {
+  pointer-events: auto;
+}
+
+/* Draggable Annotation Styles */
+.draggable-annotation {
+  position: absolute;
+  border: 1px solid #007acc;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  cursor: grab;
+  z-index: 1000;
+}
+
+.draggable-annotation:active {
+  cursor: grabbing;
+}
+
+.draggable-annotation.dragging {
+  opacity: 0.5;
+}
+
+.annotation-delete-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.annotation-delete-btn:hover {
+  background-color: #c82333;
+}
+
+.annotation-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  font-size: inherit;
+}
+
+.annotation-content {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Annotation Component Styles */
+.annotation-item {
+  position: absolute;
+  left: var(--annotation-x);
+  top: var(--annotation-y);
+  width: var(--annotation-width);
+  height: var(--annotation-height);
+  font-size: var(--annotation-font-size);
+  border: 2px solid #007bff;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: move;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.annotation-item:hover {
+  border-color: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.annotation-delete {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  transition: background-color 0.2s;
+}
+
+.annotation-delete:hover {
+  background-color: #c82333;
+}
+
+.annotation-edit-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+}
+
+.annotation-display {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Simple Annotation Styles */
+.simple-annotation {
+  position: absolute;
+  border: 2px solid #007bff;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+  min-height: 25px;
+  display: flex;
+  align-items: center;
+}
+
+.simple-annotation:hover {
+  border-color: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.simple-delete {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simple-delete:hover {
+  background-color: #c82333;
+}

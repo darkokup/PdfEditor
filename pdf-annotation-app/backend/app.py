@@ -194,9 +194,8 @@ def generate_pdf():
             
             print(f"Page {page_num + 1}: {page_width} x {page_height}")
             
-            # Get page annotations (handle both 0-based and 1-based page numbering)
-            page_annotations = [ann for ann in annotations if 
-                              ann.get('page', 0) == page_num or ann.get('page', 1) == page_num + 1]
+            # Get page annotations (using 0-based indexing consistently)
+            page_annotations = [ann for ann in annotations if ann.get('page', 0) == page_num]
             
             print(f"Page {page_num + 1} has {len(page_annotations)} annotations")
             

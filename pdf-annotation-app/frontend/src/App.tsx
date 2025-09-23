@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import CleanPDFViewer from './components/CleanPDFViewer';
-import WorkingPDFViewer from './components/WorkingPDFViewer';
 import SimplePDFDisplay from './components/SimplePDFDisplay';
 import ControlPalette from './components/ControlPalette';
 import ProjectManager from './components/ProjectManager';
@@ -198,7 +197,7 @@ const App: React.FC = () => {
 
         <main className="main-content">
           {pdfData ? (
-            <WorkingPDFViewer
+            <CleanPDFViewer
               pdfData={pdfData}
               annotations={annotations}
               onAnnotationAdd={handlePDFClick}

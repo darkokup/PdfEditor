@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app, origins=['http://localhost:3001', 'http://127.0.0.1:3001'], 
+CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'], 
      allow_headers=['Content-Type'], 
      methods=['GET', 'POST', 'OPTIONS'])
 
@@ -194,8 +194,9 @@ def generate_pdf():
             
             print(f"Page {page_num + 1}: {page_width} x {page_height}")
             
-            # Get page annotations (note: page numbering starts from 1 in frontend, 0 in backend)
-            page_annotations = [ann for ann in annotations if ann.get('page', 1) == page_num + 1]
+            # Get page annotations (handle both 0-based and 1-based page numbering)
+            page_annotations = [ann for ann in annotations if 
+                              ann.get('page', 0) == page_num or ann.get('page', 1) == page_num + 1]
             
             print(f"Page {page_num + 1} has {len(page_annotations)} annotations")
             
@@ -211,11 +212,24 @@ def generate_pdf():
                     height = float(annotation.get('height', 20))
                     value = str(annotation.get('value', ''))
                     
-                    # Convert web coordinates (top-left origin) to PDF coordinates (bottom-left origin)
-                    pdf_x = x
-                    pdf_y = page_height - y - height
+                    print(f"  Original annotation: '{value}' at web({x},{y}) size({width},{height})")
                     
-                    print(f"  Annotation: '{value}' at web({x},{y}) -> pdf({pdf_x},{pdf_y}) size({width},{height})")
+                    # Skip annotations that are completely outside the page bounds
+                    if x >= page_width or y >= page_height or x + width <= 0 or y + height <= 0:
+                        print(f"  Skipping annotation outside bounds: x={x}, y={y}, page_size=({page_width},{page_height})")
+                        continue
+                    
+                    # Clip coordinates to page bounds but don't force them to arbitrary values
+                    clipped_x = max(0, min(x, page_width - 1))
+                    clipped_y = max(0, min(y, page_height - 1))
+                    clipped_width = min(width, page_width - clipped_x)
+                    clipped_height = min(height, page_height - clipped_y)
+                    
+                    # Convert web coordinates (top-left origin) to PDF coordinates (bottom-left origin)
+                    pdf_x = clipped_x
+                    pdf_y = page_height - clipped_y - clipped_height
+                    
+                    print(f"  Final annotation: '{value}' at web({clipped_x},{clipped_y}) -> pdf({pdf_x},{pdf_y}) size({clipped_width},{clipped_height})")
                     
                     if annotation.get('type') == 'text':
                         # Set font and size
@@ -225,11 +239,11 @@ def generate_pdf():
                         # Draw text with border box
                         can.setStrokeColor("black")
                         can.setLineWidth(1)
-                        can.rect(pdf_x, pdf_y, width, height, stroke=1, fill=0)
+                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, stroke=1, fill=0)
                         
                         # Draw text inside the box
                         text_x = pdf_x + 2  # small padding
-                        text_y = pdf_y + (height / 2) - 3  # center vertically
+                        text_y = pdf_y + (clipped_height / 2) - 3  # center vertically
                         can.drawString(text_x, text_y, value)
                         
                     elif annotation.get('type') == 'date':
@@ -238,10 +252,10 @@ def generate_pdf():
                         can.setFillColor("black")
                         can.setStrokeColor("black")
                         can.setLineWidth(1)
-                        can.rect(pdf_x, pdf_y, width, height, stroke=1, fill=0)
+                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, stroke=1, fill=0)
                         
                         text_x = pdf_x + 2
-                        text_y = pdf_y + (height / 2) - 3
+                        text_y = pdf_y + (clipped_height / 2) - 3
                         can.drawString(text_x, text_y, value)
                 
                 can.save()

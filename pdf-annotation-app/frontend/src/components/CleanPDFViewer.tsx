@@ -4,8 +4,8 @@ import { Annotation } from '../types';
 import AnnotationOverlaySimple from './AnnotationOverlaySimple';
 import './PDFViewer.css';
 
-// Set up PDF.js worker - using jsDelivr CDN which is more reliable
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Use local worker file served from public folder
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 interface PDFViewerProps {
   pdfData: string | null;
@@ -42,7 +42,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       y,
       width: type === 'text' ? 200 : 150,
       height: 30,
-      page: currentPage - 1,
+      page: currentPage - 1, // Convert to 0-based indexing for backend
       value: type === 'text' ? 'Enter text...' : new Date().toLocaleDateString(),
     };
     onAnnotationAdd(newAnnotation);
@@ -114,28 +114,30 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       </div>
 
       <div className="pdf-container">
-        <div className="pdf-page-wrapper">
-          <Document
-            file={pdfUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={<div>Loading PDF...</div>}
-          >
-            <Page
-              pageNumber={currentPage}
+        <div className="pdf-content-wrapper">
+          <div className="pdf-page-wrapper">
+            <Document
+              file={pdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={<div>Loading PDF...</div>}
+            >
+              <Page
+                pageNumber={currentPage}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </Document>
+            
+            <AnnotationOverlaySimple
+              annotations={currentPageAnnotations}
               scale={scale}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
+              onDrop={handlePageDrop}
+              onAnnotationUpdate={handleAnnotationUpdate}
+              onAnnotationDelete={onAnnotationDelete}
             />
-          </Document>
-          
-          <AnnotationOverlaySimple
-            annotations={currentPageAnnotations}
-            scale={scale}
-            onDrop={handlePageDrop}
-            onAnnotationUpdate={handleAnnotationUpdate}
-            onAnnotationDelete={onAnnotationDelete}
-          />
+          </div>
         </div>
       </div>
     </div>

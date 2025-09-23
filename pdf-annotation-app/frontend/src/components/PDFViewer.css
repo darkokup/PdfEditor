@@ -63,11 +63,17 @@
 .pdf-container {
   flex: 1;
   overflow: auto;
+  padding: 20px;
+  background-color: #f0f0f0;
+  position: relative;
+}
+
+.pdf-content-wrapper {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 20px;
-  background-color: #f0f0f0;
+  min-height: 100%;
+  min-width: fit-content;
 }
 
 .pdf-page-wrapper {
@@ -83,10 +89,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 1000;
+  /* Dimensions will be set dynamically via JavaScript */
 }
 
 .annotation-overlay.drop-active {
@@ -231,10 +236,10 @@
   cursor: pointer;
   z-index: 1000;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-width: 100px;
-  min-height: 25px;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .simple-annotation:hover {
@@ -244,21 +249,47 @@
 
 .simple-delete {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 16px;
-  height: 16px;
+  border: none;
   border-radius: 50%;
   background-color: #dc3545;
   color: white;
-  border: none;
-  font-size: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.2s;
 }
 
 .simple-delete:hover {
   background-color: #c82333;
+}
+
+.simple-annotation-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+/* Print-specific styles */
+@media print {
+  .simple-annotation {
+    border: 1px solid #000 !important;
+    background-color: white !important;
+    box-shadow: none !important;
+    position: absolute !important;
+    page-break-inside: avoid;
+  }
+  
+  .simple-delete {
+    display: none !important;
+  }
+  
+  .annotation-delete-btn {
+    display: none !important;
+  }
+  
+  .pdf-controls {
+    display: none !important;
+  }
 }

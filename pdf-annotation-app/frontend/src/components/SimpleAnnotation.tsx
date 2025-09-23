@@ -6,6 +6,8 @@ interface SimpleAnnotationProps {
   scale: number;
   onUpdate: (id: string, updates: Partial<Annotation>) => void;
   onDelete: (id: string) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
 const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
@@ -13,6 +15,8 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   scale,
   onUpdate,
   onDelete,
+  onDragStart,
+  onDragEnd,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -22,20 +26,27 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     onDelete(annotation.id);
   };
 
-  const handleEdit = () => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent overlay from handling this click
     const newValue = prompt('Edit value:', annotation.value);
     if (newValue !== null) {
       onUpdate(annotation.id, { value: newValue });
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent overlay from creating new annotation
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent overlay click
     if (e.target === elementRef.current || (e.target as Element).classList.contains('simple-annotation-text')) {
       setIsDragging(true);
       setDragStart({
         x: e.clientX - annotation.x * scale,
         y: e.clientY - annotation.y * scale,
       });
+      onDragStart?.(); // Suppress overlay clicks
       e.preventDefault();
     }
   };
@@ -61,6 +72,9 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     };
 
     const handleMouseUpCallback = () => {
+      if (isDragging) {
+        onDragEnd?.(); // Suppress overlay clicks after drag
+      }
       setIsDragging(false);
     };
 
@@ -72,7 +86,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
         document.removeEventListener('mouseup', handleMouseUpCallback);
       };
     }
-  }, [isDragging, dragStart, annotation.id, annotation.width, annotation.height, scale, onUpdate]);
+  }, [isDragging, dragStart, annotation.id, annotation.width, annotation.height, scale, onUpdate, onDragEnd]);
 
   const annotationStyle = {
     left: `${Math.max(0, annotation.x * scale)}px`,
@@ -99,7 +113,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
       className="simple-annotation"
       style={annotationStyle}
       onMouseDown={handleMouseDown}
-      onDoubleClick={handleEdit}
+      onClick={handleClick}
     >
       <button 
         className="simple-delete" 
@@ -111,7 +125,11 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
       >
         ×
       </button>
-      <span className="simple-annotation-text">
+      <span 
+        className="simple-annotation-text"
+        onClick={handleEdit}
+        style={{ cursor: 'pointer' }}
+      >
         {annotation.value || 'Click to edit'}
       </span>
     </div>

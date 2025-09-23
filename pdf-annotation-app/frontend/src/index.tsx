@@ -4,6 +4,14 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// Configure PDF.js worker for react-pdf v10
+import { pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// Set worker source
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );

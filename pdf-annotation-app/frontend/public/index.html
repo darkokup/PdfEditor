@@ -25,6 +25,34 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>React App</title>
+    <script>
+      // Configure PDF.js worker before any modules load
+      window.pdfjsWorkerSrc = '/pdf.worker.min.js';
+      
+      // Set up global configuration
+      window.addEventListener('DOMContentLoaded', function() {
+        // Try to configure worker on various possible global objects
+        if (window.pdfjsLib) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+          console.log('PDF.js worker configured via pdfjsLib');
+        }
+        if (window.pdfjs) {
+          window.pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+          console.log('PDF.js worker configured via pdfjs');
+        }
+      });
+      
+      // Intercept and configure when react-pdf loads
+      const originalDefine = window.define;
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+            console.log('PDF.js worker configured after page load');
+          }
+        }, 1000);
+      });
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

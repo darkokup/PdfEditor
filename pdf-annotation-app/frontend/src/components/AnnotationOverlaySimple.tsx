@@ -6,7 +6,7 @@ interface AnnotationOverlayProps {
   annotations: Annotation[];
   scale: number;
   onDrop: (x: number, y: number, type: 'text' | 'date') => void;
-  onAnnotationUpdate: (annotationId: string, value: string) => void;
+  onAnnotationUpdate: (annotationId: string, updates: Partial<Annotation>) => void;
   onAnnotationDelete: (annotationId: string) => void;
 }
 
@@ -19,6 +19,7 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [pdfCanvas, setPdfCanvas] = useState<HTMLCanvasElement | null>(null);
+  const lastClickTime = useRef(0);
 
   useEffect(() => {
     const findAndSyncWithCanvas = () => {
@@ -75,7 +76,18 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
     };
   }, [scale, pdfCanvas]);
 
+  const suppressClick = () => {
+    lastClickTime.current = Date.now();
+  };
+
   const handleClick = (e: React.MouseEvent) => {
+    // Simple debounce - if clicked very recently, ignore
+    const now = Date.now();
+    if (now - lastClickTime.current < 500) { // Increased from 200ms to 500ms
+      return;
+    }
+    lastClickTime.current = now;
+
     if (!overlayRef.current) return;
     
     const rect = overlayRef.current.getBoundingClientRect();
@@ -107,11 +119,11 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
           annotation={annotation}
           scale={scale}
           onUpdate={(id, updates) => {
-            if (updates.value !== undefined) {
-              onAnnotationUpdate(id, updates.value);
-            }
+            onAnnotationUpdate(id, updates);
           }}
           onDelete={onAnnotationDelete}
+          onDragStart={suppressClick}
+          onDragEnd={suppressClick}
         />
       ))}
     </div>

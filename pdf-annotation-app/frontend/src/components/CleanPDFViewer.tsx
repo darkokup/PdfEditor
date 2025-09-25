@@ -26,6 +26,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState<boolean>(false);
 
   // Configure PDF.js worker with multiple fallback methods
   useEffect(() => {
@@ -251,6 +252,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               onDrop={handlePageDrop}
               onAnnotationUpdate={handleAnnotationUpdate}
               onAnnotationDelete={onAnnotationDelete}
+              isSettingsDialogOpen={isSettingsDialogOpen}
+              onSettingsDialogOpenChange={setIsSettingsDialogOpen}
             />
           </div>
         </div>

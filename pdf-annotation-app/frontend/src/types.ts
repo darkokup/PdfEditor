@@ -8,6 +8,12 @@ export interface Annotation {
   page: number;
   value: string;
   created_at: string;
+  // New styling properties
+  multiline?: boolean;
+  transparent?: boolean;
+  borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted' | 'dash-dot';
+  borderColor?: string;
+  borderWidth?: number; // Line width in pixels (1-10)
 }
 
 export interface ProjectData {

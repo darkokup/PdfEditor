@@ -239,15 +239,17 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden to visible to show menu */
 }
 
 .simple-annotation:hover {
   border-color: #0056b3;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1010; /* Bring hovered annotation to front */
 }
 
-.simple-delete {
+.simple-delete,
+.simple-menu {
   position: absolute;
   border: none;
   border-radius: 50%;
@@ -258,10 +260,57 @@
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
+  z-index: 1002; /* Higher z-index to appear above annotation */
+}
+
+.simple-menu {
+  background-color: #6c757d;
+  font-size: 10px;
+  font-weight: bold;
 }
 
 .simple-delete:hover {
   background-color: #c82333;
+}
+
+.simple-menu:hover {
+  background-color: #5a6268;
+}
+
+.annotation-menu {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 1003; /* Even higher z-index for dropdown */
+  min-width: 100px;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+.menu-item:first-child {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.menu-item:last-child {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
 }
 
 .simple-annotation-text {
@@ -269,6 +318,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
+  flex: 1; /* Allow text to flex within annotation box */
 }
 
 /* Print-specific styles */
@@ -281,7 +331,9 @@
     page-break-inside: avoid;
   }
   
-  .simple-delete {
+  .simple-delete,
+  .simple-menu,
+  .annotation-menu {
     display: none !important;
   }
   

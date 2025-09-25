@@ -1,5 +1,8 @@
-import React, { useState, useRef } from 'react';
+/* eslint-disable react/forbid-dom-props */
+import React, { useState, useRef, useEffect } from 'react';
 import { Annotation } from '../types';
+import AnnotationSettingsDialog from './AnnotationSettingsDialog';
+import './SimpleAnnotation.css';
 
 interface SimpleAnnotationProps {
   annotation: Annotation;
@@ -8,6 +11,8 @@ interface SimpleAnnotationProps {
   onDelete: (id: string) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  onSettingsDialogOpenChange?: (isOpen: boolean) => void; // Callback for settings dialog state
+  pageDimensions?: { width: number; height: number }; // Page dimensions for calculating max width/height
 }
 
 const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
@@ -17,13 +22,33 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   onDelete,
   onDragStart,
   onDragEnd,
+  onSettingsDialogOpenChange,
+  pageDimensions,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [showMenu, setShowMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
 
   const handleDelete = () => {
     onDelete(annotation.id);
+    setShowMenu(false);
+  };
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowMenu(!showMenu);
+  };
+
+  const handleSettingsClick = () => {
+    setShowSettings(true);
+    setShowMenu(false);
+    onSettingsDialogOpenChange?.(true); // Notify that settings dialog is opening
+  };
+
+  const handleSettingsSave = (updates: Partial<Annotation>) => {
+    onUpdate(annotation.id, updates);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -50,6 +75,22 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
       e.preventDefault();
     }
   };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (elementRef.current && !elementRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showMenu]);
 
   React.useEffect(() => {
     const handleMouseMoveCallback = (e: MouseEvent) => {
@@ -88,51 +129,96 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     }
   }, [isDragging, dragStart, annotation.id, annotation.width, annotation.height, scale, onUpdate, onDragEnd]);
 
-  const annotationStyle = {
-    left: `${Math.max(0, annotation.x * scale)}px`,
-    top: `${Math.max(0, annotation.y * scale)}px`,
-    width: `${annotation.width * scale}px`,
-    height: `${annotation.height * scale}px`,
-    fontSize: `${Math.max(10, 12 * scale)}px`,
-    minWidth: `${Math.max(60, 80 * scale)}px`,
-    minHeight: `${Math.max(18, 20 * scale)}px`,
-    cursor: isDragging ? 'grabbing' : 'grab',
+  // Get CSS classes for styling
+  const getBorderClass = () => {
+    const borderStyle = annotation.borderStyle || 'solid';
+    return `border-${borderStyle}`;
   };
 
-  const deleteButtonStyle = {
-    top: `${-8 * scale}px`,
-    right: `${-8 * scale}px`,
-    width: `${Math.max(12, 16 * scale)}px`,
-    height: `${Math.max(12, 16 * scale)}px`,
-    fontSize: `${Math.max(8, 10 * scale)}px`,
+  const getBackgroundClass = () => {
+    return annotation.transparent ? 'transparent' : 'opaque';
+  };
+
+  const getTextClass = () => {
+    return annotation.multiline ? 'multiline' : 'singleline';
   };
 
   return (
-    <div 
-      ref={elementRef}
-      className="simple-annotation"
-      style={annotationStyle}
-      onMouseDown={handleMouseDown}
-      onClick={handleClick}
-    >
-      <button 
-        className="simple-delete" 
-        style={deleteButtonStyle}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleDelete();
+    <>
+      <div 
+        ref={elementRef}
+        className={`simple-annotation ${getBorderClass()} ${getBackgroundClass()} ${showMenu ? 'menu-open' : ''}`}
+        style={{
+          left: `${Math.max(0, annotation.x * scale)}px`,
+          top: `${Math.max(0, annotation.y * scale)}px`,
+          width: `${annotation.width * scale}px`,
+          height: `${annotation.height * scale}px`,
+          fontSize: `${Math.max(10, 12 * scale)}px`,
+          minWidth: `${Math.max(60, 80 * scale)}px`,
+          minHeight: `${Math.max(18, 20 * scale)}px`,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          borderColor: annotation.borderColor || '#007bff',
+          borderWidth: `${(annotation.borderWidth || 1) * scale}px`,
         }}
+        onMouseDown={handleMouseDown}
+        onClick={handleClick}
       >
-        ×
-      </button>
-      <span 
-        className="simple-annotation-text"
-        onClick={handleEdit}
-        style={{ cursor: 'pointer' }}
-      >
-        {annotation.value || 'Click to edit'}
-      </span>
-    </div>
+        <button 
+          className="simple-menu"
+          style={{
+            top: `${-8 * scale}px`,
+            right: `${-8 * scale}px`,
+            width: `${Math.max(12, 16 * scale)}px`,
+            height: `${Math.max(12, 16 * scale)}px`,
+            fontSize: `${Math.max(8, 10 * scale)}px`,
+          }}
+          onClick={handleMenuClick}
+        >
+          ☰
+        </button>
+        
+        {showMenu && (
+          <div 
+            className="annotation-menu"
+            style={{
+              top: `${16 * scale}px`,
+              right: '0px',
+            }}
+          >
+            <button 
+              className="simple-annotation-menu-item"
+              onClick={handleSettingsClick}
+            >
+              Settings
+            </button>
+            <button 
+              className="simple-annotation-menu-item remove"
+              onClick={handleDelete}
+            >
+              Remove
+            </button>
+          </div>
+        )}
+        
+        <span 
+          className={`simple-annotation-text ${getTextClass()}`}
+          onClick={handleEdit}
+        >
+          {annotation.value || 'Click to edit'}
+        </span>
+      </div>
+      
+      <AnnotationSettingsDialog
+        annotation={annotation}
+        isOpen={showSettings}
+        onClose={() => {
+          setShowSettings(false);
+          onSettingsDialogOpenChange?.(false); // Notify that settings dialog is closing
+        }}
+        onSave={handleSettingsSave}
+        pageDimensions={pageDimensions}
+      />
+    </>
   );
 };
 

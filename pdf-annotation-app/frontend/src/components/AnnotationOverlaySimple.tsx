@@ -8,6 +8,9 @@ interface AnnotationOverlayProps {
   onDrop: (x: number, y: number, type: 'text' | 'date') => void;
   onAnnotationUpdate: (annotationId: string, updates: Partial<Annotation>) => void;
   onAnnotationDelete: (annotationId: string) => void;
+  isSettingsDialogOpen?: boolean; // New prop to disable annotation adding
+  onSettingsDialogOpenChange?: (isOpen: boolean) => void; // Callback for settings dialog state
+  pageDimensions?: { width: number; height: number }; // Page dimensions for calculating max width/height
 }
 
 const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
@@ -16,9 +19,13 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   onDrop,
   onAnnotationUpdate,
   onAnnotationDelete,
+  isSettingsDialogOpen = false, // Default to false if not provided
+  onSettingsDialogOpenChange,
+  pageDimensions,
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [pdfCanvas, setPdfCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [calculatedPageDimensions, setCalculatedPageDimensions] = useState<{ width: number; height: number } | null>(null);
   const lastClickTime = useRef(0);
 
   useEffect(() => {
@@ -47,6 +54,13 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
         overlayRef.current.style.left = '0';
         overlayRef.current.style.pointerEvents = 'auto';
         overlayRef.current.style.zIndex = '1000';
+        
+        // Calculate page dimensions in PDF coordinates (unscaled)
+        const pageDims = {
+          width: canvasWidth / scale,
+          height: canvasHeight / scale
+        };
+        setCalculatedPageDimensions(pageDims);
       }
     };
 
@@ -81,6 +95,11 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent) => {
+    // Don't add annotations if settings dialog is open
+    if (isSettingsDialogOpen) {
+      return;
+    }
+
     // Simple debounce - if clicked very recently, ignore
     const now = Date.now();
     if (now - lastClickTime.current < 500) { // Increased from 200ms to 500ms
@@ -124,6 +143,8 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
           onDelete={onAnnotationDelete}
           onDragStart={suppressClick}
           onDragEnd={suppressClick}
+          onSettingsDialogOpenChange={onSettingsDialogOpenChange}
+          pageDimensions={pageDimensions || calculatedPageDimensions || undefined}
         />
       ))}
     </div>

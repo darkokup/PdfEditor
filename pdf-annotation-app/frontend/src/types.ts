@@ -11,7 +11,7 @@ export interface Annotation {
   // New styling properties
   multiline?: boolean;
   transparent?: boolean;
-  borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted' | 'dash-dot';
+  borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted';
   borderColor?: string;
   borderWidth?: number; // Line width in pixels (1-10)
 }

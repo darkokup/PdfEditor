@@ -67,11 +67,6 @@
   border-style: dotted;
 }
 
-.simple-annotation.border-dash-dot {
-  border-width: 2px;
-  border-style: ridge;
-}
-
 .simple-annotation.transparent {
   background-color: transparent !important;
 }

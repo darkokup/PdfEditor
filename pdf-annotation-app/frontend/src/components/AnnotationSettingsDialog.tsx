@@ -33,6 +33,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
     position: { x: 0, y: 0 }
   });
 
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -237,18 +239,83 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="borderStyle">Border Line:</label>
-            <select
-              id="borderStyle"
-              value={settings.borderStyle}
-              onChange={(e) => handleInputChange('borderStyle', e.target.value)}
-            >
-              <option value="none">No Line</option>
-              <option value="solid">Full Line</option>
-              <option value="dashed">Dashed Line</option>
-              <option value="dotted">Dotted Line</option>
-              <option value="dash-dot">Ridge Line</option>
-            </select>
+            <label>Border Line:</label>
+            <div className="custom-image-dropdown">
+              <div 
+                className="dropdown-selected"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                <div className="selected-option">
+                  {settings.borderStyle === 'none' && (
+                    <svg width="40" height="16" viewBox="0 0 40 16">
+                      <text x="20" y="12" textAnchor="middle" fontSize="10" fill="#666">None</text>
+                    </svg>
+                  )}
+                  {settings.borderStyle === 'solid' && (
+                    <svg width="40" height="16" viewBox="0 0 40 16">
+                      <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1"/>
+                    </svg>
+                  )}
+                  {settings.borderStyle === 'dashed' && (
+                    <svg width="40" height="16" viewBox="0 0 40 16">
+                      <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="4,2"/>
+                    </svg>
+                  )}
+                  {settings.borderStyle === 'dotted' && (
+                    <svg width="40" height="16" viewBox="0 0 40 16">
+                      <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="1,2"/>
+                    </svg>
+                  )}
+                </div>
+                <span className="dropdown-arrow">▼</span>
+              </div>
+              <div className={`dropdown-options ${isDropdownOpen ? 'open' : ''}`}>
+                <div 
+                  className="dropdown-option"
+                  onClick={() => {
+                    handleInputChange('borderStyle', 'none');
+                    setIsDropdownOpen(false);
+                  }}
+                >
+                  <svg width="40" height="16" viewBox="0 0 40 16">
+                    <text x="20" y="12" textAnchor="middle" fontSize="10" fill="#666">None</text>
+                  </svg>
+                </div>
+                <div 
+                  className="dropdown-option"
+                  onClick={() => {
+                    handleInputChange('borderStyle', 'solid');
+                    setIsDropdownOpen(false);
+                  }}
+                >
+                  <svg width="40" height="16" viewBox="0 0 40 16">
+                    <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1"/>
+                  </svg>
+                </div>
+                <div 
+                  className="dropdown-option"
+                  onClick={() => {
+                    handleInputChange('borderStyle', 'dashed');
+                    setIsDropdownOpen(false);
+                  }}
+                >
+                  <svg width="40" height="16" viewBox="0 0 40 16">
+                    <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="4,2"/>
+                  </svg>
+                </div>
+                <div 
+                  className="dropdown-option"
+                  onClick={() => {
+                    handleInputChange('borderStyle', 'dotted');
+                    setIsDropdownOpen(false);
+                  }}
+                >
+                  <svg width="40" height="16" viewBox="0 0 40 16">
+                    <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="1,2"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="form-group">

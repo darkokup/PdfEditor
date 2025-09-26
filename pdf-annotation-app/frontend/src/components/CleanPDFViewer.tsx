@@ -25,6 +25,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 }) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageInputValue, setPageInputValue] = useState<string>('1'); // For the page input box
   const [scale, setScale] = useState<number>(1.0);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState<boolean>(false);
 
@@ -135,10 +136,47 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     };
   }, []); // Empty dependency array - only cleanup on unmount
 
+  // Add keyboard and mouse wheel event listeners for zoom controls
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.ctrlKey) {
+        if (e.key === '+' || e.key === '=') {
+          e.preventDefault();
+          setScale(prev => Math.min(3.0, prev + 0.2));
+        } else if (e.key === '-') {
+          e.preventDefault();
+          setScale(prev => Math.max(0.5, prev - 0.2));
+        }
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+          // Scrolling down - zoom out
+          setScale(prev => Math.max(0.5, prev - 0.1));
+        } else {
+          // Scrolling up - zoom in
+          setScale(prev => Math.min(3.0, prev + 0.1));
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydown);
+    document.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      document.removeEventListener('keydown', handleKeydown);
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     console.log('PDF document loaded successfully, pages:', numPages);
     setNumPages(numPages);
     setCurrentPage(1);
+    setPageInputValue('1'); // Reset page input to 1
   }, []);
 
   const onDocumentLoadError = useCallback((error: Error) => {
@@ -166,11 +204,46 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   }, [onAnnotationUpdate]);
 
   const goToPrevious = () => {
-    setCurrentPage(prev => Math.max(1, prev - 1));
+    setCurrentPage(prev => {
+      const newPage = Math.max(1, prev - 1);
+      setPageInputValue(newPage.toString());
+      return newPage;
+    });
   };
 
   const goToNext = () => {
-    setCurrentPage(prev => Math.min(numPages, prev + 1));
+    setCurrentPage(prev => {
+      const newPage = Math.min(numPages, prev + 1);
+      setPageInputValue(newPage.toString());
+      return newPage;
+    });
+  };
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInputValue(e.target.value);
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pageNumber = parseInt(pageInputValue, 10);
+    
+    if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > numPages) {
+      // Reset to current page if invalid
+      setPageInputValue(currentPage.toString());
+      return;
+    }
+    
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePageInputBlur = () => {
+    handlePageInputSubmit({ preventDefault: () => {} } as React.FormEvent);
+  };
+
+  const handlePageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePageInputSubmit(e as any);
+    }
   };
 
   const zoomIn = () => {
@@ -198,24 +271,33 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     <div className="pdf-viewer">
       <div className="pdf-controls">
         <div className="navigation-controls">
-          <button onClick={goToPrevious} disabled={currentPage <= 1}>
-            Previous
+          <button onClick={goToPrevious} disabled={currentPage <= 1} title="Previous Page">
+            ◀
           </button>
-          <span>
-            Page {currentPage} of {numPages}
-          </span>
-          <button onClick={goToNext} disabled={currentPage >= numPages}>
-            Next
+          <form onSubmit={handlePageInputSubmit} className="page-input-form">
+            <input
+              type="text"
+              value={pageInputValue}
+              onChange={handlePageInputChange}
+              onBlur={handlePageInputBlur}
+              onKeyPress={handlePageInputKeyPress}
+              className="page-input"
+              title="Enter page number"
+            />
+            <span>of {numPages}</span>
+          </form>
+          <button onClick={goToNext} disabled={currentPage >= numPages} title="Next Page">
+            ▶
           </button>
         </div>
         
         <div className="zoom-controls">
-          <button onClick={zoomOut} disabled={scale <= 0.5}>
-            Zoom Out
+          <button onClick={zoomOut} disabled={scale <= 0.5} title="Zoom Out">
+            −
           </button>
           <span>{Math.round(scale * 100)}%</span>
-          <button onClick={zoomIn} disabled={scale >= 3.0}>
-            Zoom In
+          <button onClick={zoomIn} disabled={scale >= 3.0} title="Zoom In">
+            +
           </button>
         </div>
       </div>

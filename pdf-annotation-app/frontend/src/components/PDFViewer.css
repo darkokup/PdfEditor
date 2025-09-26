@@ -37,15 +37,38 @@
   gap: 10px;
 }
 
+.page-input-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.page-input {
+  width: 50px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 14px;
+}
+
+.page-input:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.25);
+}
+
 .navigation-controls button,
 .zoom-controls button {
-  padding: 8px 16px;
+  padding: 8px 12px;
   border: 1px solid #007acc;
   background-color: #007acc;
   color: white;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-size: 16px;
+  min-width: 40px;
 }
 
 .navigation-controls button:hover,

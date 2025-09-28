@@ -280,6 +280,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                   <svg width="40" height="16" viewBox="0 0 40 16">
                     <text x="20" y="12" textAnchor="middle" fontSize="10" fill="#666">None</text>
                   </svg>
+                  <span className="dropdown-spacer"></span>
                 </div>
                 <div 
                   className="dropdown-option"
@@ -291,6 +292,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                   <svg width="40" height="16" viewBox="0 0 40 16">
                     <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1"/>
                   </svg>
+                  <span className="dropdown-spacer"></span>
                 </div>
                 <div 
                   className="dropdown-option"
@@ -302,6 +304,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                   <svg width="40" height="16" viewBox="0 0 40 16">
                     <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="4,2"/>
                   </svg>
+                  <span className="dropdown-spacer"></span>
                 </div>
                 <div 
                   className="dropdown-option"
@@ -313,6 +316,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                   <svg width="40" height="16" viewBox="0 0 40 16">
                     <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="1,2"/>
                   </svg>
+                  <span className="dropdown-spacer"></span>
                 </div>
               </div>
             </div>

@@ -5,7 +5,7 @@ import SimpleAnnotation from './SimpleAnnotation';
 interface AnnotationOverlayProps {
   annotations: Annotation[];
   scale: number;
-  onDrop: (x: number, y: number, type: 'text' | 'date') => void;
+  onDrop: (x: number, y: number) => void;
   onAnnotationUpdate: (annotationId: string, updates: Partial<Annotation>) => void;
   onAnnotationDelete: (annotationId: string) => void;
   isSettingsDialogOpen?: boolean; // New prop to disable annotation adding
@@ -123,7 +123,7 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
     const boundedX = Math.max(0, Math.min(pdfX, (rect.width / scale) - maxWidth));
     const boundedY = Math.max(0, Math.min(pdfY, (rect.height / scale) - maxHeight));
     
-    onDrop(boundedX, boundedY, 'text');
+    onDrop(boundedX, boundedY);
   };
 
   return (

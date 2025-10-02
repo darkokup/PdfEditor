@@ -31,7 +31,8 @@
 }
 
 .navigation-controls,
-.zoom-controls {
+.zoom-controls,
+.annotation-controls {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -44,12 +45,24 @@
 }
 
 .page-input {
-  width: 50px;
+  width: 30px; /* Reduced from 50px to fit 3 characters */
   text-align: center;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 4px;
-  font-size: 14px;
+  font-size: 14px; /* Reduced font size for smaller input */
+}
+
+/* Hide number input spinners/arrows */
+.page-input::-webkit-outer-spin-button,
+.page-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.page-input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .page-input:focus {
@@ -59,25 +72,41 @@
 }
 
 .navigation-controls button,
-.zoom-controls button {
-  padding: 8px 12px;
+.zoom-controls button,
+.annotation-mode-btn {
+  padding: 4px 8px; /* Reduced from 8px 12px for smaller buttons */
   border: 1px solid #007acc;
   background-color: #007acc;
   color: white;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
-  font-size: 16px;
-  min-width: 40px;
+  font-size: 12px; /* Reduced from 16px for smaller text */
+  min-width: 25px; /* Reduced from 40px for smaller buttons */
+  height: 28px; /* Fixed height to ensure consistent size */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.annotation-mode-btn.active {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.annotation-mode-btn.active:hover {
+  background-color: #218838;
 }
 
 .navigation-controls button:hover,
-.zoom-controls button:hover {
+.zoom-controls button:hover,
+.annotation-mode-btn:hover {
   background-color: #005a9e;
 }
 
 .navigation-controls button:disabled,
-.zoom-controls button:disabled {
+.zoom-controls button:disabled,
+.annotation-mode-btn:disabled {
   background-color: #ccc;
   border-color: #ccc;
   cursor: not-allowed;
@@ -96,6 +125,7 @@
   justify-content: center;
   align-items: flex-start;
   min-height: 100%;
+  min-width: -webkit-fill-available;
   min-width: fit-content;
 }
 

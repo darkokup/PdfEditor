@@ -28,6 +28,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [pageInputValue, setPageInputValue] = useState<string>('1'); // For the page input box
   const [scale, setScale] = useState<number>(1.0);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState<boolean>(false);
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'date' | null>(null);
 
   // Configure PDF.js worker with multiple fallback methods
   useEffect(() => {
@@ -186,18 +187,21 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     // Don't reset state on error to avoid infinite reload loops
   }, [pdfUrl, pdfData]);
 
-  const handlePageDrop = useCallback((x: number, y: number, type: 'text' | 'date') => {
+  const handlePageDrop = useCallback((x: number, y: number) => {
+    // Only add annotation if a mode is selected
+    if (!annotationMode) return;
+    
     const newAnnotation: Omit<Annotation, 'id' | 'created_at'> = {
-      type,
+      type: annotationMode,
       x,
       y,
-      width: type === 'text' ? 200 : 150,
+      width: annotationMode === 'text' ? 200 : 150,
       height: 30,
       page: currentPage - 1, // Convert to 0-based indexing for backend
-      value: type === 'text' ? 'Enter text...' : new Date().toLocaleDateString(),
+      value: annotationMode === 'text' ? 'Enter text...' : new Date().toLocaleDateString(),
     };
     onAnnotationAdd(newAnnotation);
-  }, [currentPage, onAnnotationAdd]);
+  }, [currentPage, onAnnotationAdd, annotationMode]);
 
   const handleAnnotationUpdate = useCallback((annotationId: string, updates: Partial<Annotation>) => {
     onAnnotationUpdate(annotationId, updates);
@@ -220,7 +224,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPageInputValue(e.target.value);
+    const value = e.target.value;
+    // Allow empty string for editing, or valid numbers within range
+    if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) <= numPages)) {
+      setPageInputValue(value);
+    }
   };
 
   const handlePageInputSubmit = (e: React.FormEvent) => {
@@ -254,6 +262,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     setScale(prev => Math.max(0.5, prev - 0.2));
   };
 
+  const handleTextModeToggle = () => {
+    setAnnotationMode(current => current === 'text' ? null : 'text');
+  };
+
+  const handleDateModeToggle = () => {
+    setAnnotationMode(current => current === 'date' ? null : 'date');
+  };
+
   if (!pdfData || !pdfUrl) {
     return (
       <div className="pdf-viewer-placeholder">
@@ -274,26 +290,43 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           <button onClick={goToPrevious} disabled={currentPage <= 1} title="Previous Page">
             ◀
           </button>
-          <form onSubmit={handlePageInputSubmit} className="page-input-form">
+          <form onSubmit={handlePageInputSubmit} className="page-input-form">  
             <input
               type="text"
               value={pageInputValue}
               onChange={handlePageInputChange}
               onBlur={handlePageInputBlur}
-              onKeyPress={handlePageInputKeyPress}
+              onKeyDown={handlePageInputKeyPress}
               className="page-input"
               title="Enter page number"
             />
-            <span>of {numPages}</span>
+            <span>| {numPages}</span>
           </form>
           <button onClick={goToNext} disabled={currentPage >= numPages} title="Next Page">
             ▶
           </button>
         </div>
         
+        <div className="annotation-controls">
+          <button 
+            onClick={handleTextModeToggle} 
+            className={`annotation-mode-btn ${annotationMode === 'text' ? 'active' : ''}`}
+            title="Add Text Annotation"
+          >
+            T
+          </button>
+          <button 
+            onClick={handleDateModeToggle} 
+            className={`annotation-mode-btn ${annotationMode === 'date' ? 'active' : ''}`}
+            title="Add Date Annotation"
+          >
+            📅
+          </button>
+        </div>
+        
         <div className="zoom-controls">
           <button onClick={zoomOut} disabled={scale <= 0.5} title="Zoom Out">
-            −
+            -
           </button>
           <span>{Math.round(scale * 100)}%</span>
           <button onClick={zoomIn} disabled={scale >= 3.0} title="Zoom In">

@@ -31,6 +31,14 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   const [showSettings, setShowSettings] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
 
+  // Clean border style calculation
+  const getBorderStyle = () => {
+    const borderWidth = (annotation.borderWidth || 1) * scale;
+    const borderStyle = annotation.borderStyle || 'solid';
+    const borderColor = annotation.borderColor || '#007bff';
+    return `${borderWidth}px ${borderStyle} ${borderColor}`;
+  };
+
   const handleDelete = () => {
     onDelete(annotation.id);
     setShowMenu(false);
@@ -129,12 +137,6 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     }
   }, [isDragging, dragStart, annotation.id, annotation.width, annotation.height, scale, onUpdate, onDragEnd]);
 
-  // Get CSS classes for styling
-  const getBorderClass = () => {
-    const borderStyle = annotation.borderStyle || 'solid';
-    return `border-${borderStyle}`;
-  };
-
   const getBackgroundClass = () => {
     return annotation.transparent ? 'transparent' : 'opaque';
   };
@@ -147,7 +149,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     <>
       <div 
         ref={elementRef}
-        className={`simple-annotation ${getBorderClass()} ${getBackgroundClass()} ${showMenu ? 'menu-open' : ''}`}
+        className={`simple-annotation ${getBackgroundClass()} ${showMenu ? 'menu-open' : ''}`}
         style={{
           left: `${Math.max(0, annotation.x * scale)}px`,
           top: `${Math.max(0, annotation.y * scale)}px`,
@@ -157,9 +159,8 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           minWidth: `${Math.max(60, 80 * scale)}px`,
           minHeight: `${Math.max(18, 20 * scale)}px`,
           cursor: isDragging ? 'grabbing' : 'grab',
-          borderColor: annotation.borderColor || '#007bff',
-          borderWidth: `${(annotation.borderWidth || 1) * scale}px`,
-        }}
+          border: getBorderStyle(),
+        } as React.CSSProperties}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
       >

@@ -282,7 +282,7 @@
 /* Simple Annotation Styles */
 .simple-annotation {
   position: absolute;
-  border: 2px solid #007bff;
+  /* border removed - now handled by inline styles for individual annotation properties */
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: 4px;
   padding: 4px 8px;
@@ -296,7 +296,7 @@
 }
 
 .simple-annotation:hover {
-  border-color: #0056b3;
+  /* border-color removed - now handled by inline styles */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   z-index: 1010; /* Bring hovered annotation to front */
 }
@@ -376,12 +376,14 @@
 
 /* Print-specific styles */
 @media print {
-  .simple-annotation {
-    border: 1px solid #000 !important;
+  .simple-annotation,
+  .annotation-item,
+  .draggable-annotation {
     background-color: white !important;
     box-shadow: none !important;
     position: absolute !important;
     page-break-inside: avoid;
+    /* Do not override any border properties - let inline styles work */
   }
   
   .simple-delete,

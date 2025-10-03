@@ -8,6 +8,7 @@ from io import BytesIO
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.colors import HexColor, toColor
 import uuid
 from datetime import datetime
 
@@ -19,6 +20,75 @@ CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'],
 # Configure upload folder
 UPLOAD_FOLDER = '../projects'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def parse_color(color_str):
+    """Convert CSS color to reportlab color"""
+    if not color_str:
+        return "black"
+    
+    # Handle named colors
+    color_map = {
+        'red': HexColor('#FF0000'),
+        'blue': HexColor('#0000FF'),
+        'green': HexColor('#008000'),
+        'black': HexColor('#000000'),
+        'white': HexColor('#FFFFFF'),
+        'yellow': HexColor('#FFFF00'),
+        'orange': HexColor('#FFA500'),
+        'purple': HexColor('#800080'),
+        'gray': HexColor('#808080'),
+        'grey': HexColor('#808080'),
+        'brown': HexColor('#A52A2A'),
+        'pink': HexColor('#FFC0CB'),
+        'cyan': HexColor('#00FFFF'),
+        'magenta': HexColor('#FF00FF'),
+        'lime': HexColor('#00FF00'),
+        'navy': HexColor('#000080'),
+        'maroon': HexColor('#800000'),
+        'olive': HexColor('#808000'),
+        'teal': HexColor('#008080'),
+        'silver': HexColor('#C0C0C0')
+    }
+    
+    color_str = color_str.lower().strip()
+    
+    if color_str in color_map:
+        return color_map[color_str]
+    
+    # Handle hex colors
+    if color_str.startswith('#'):
+        try:
+            return HexColor(color_str)
+        except:
+            return "black"
+    
+    # Handle rgb() format
+    if color_str.startswith('rgb('):
+        try:
+            # Extract numbers from rgb(r,g,b)
+            rgb_part = color_str[4:-1]  # Remove 'rgb(' and ')'
+            r, g, b = [int(x.strip()) for x in rgb_part.split(',')]
+            hex_color = '#%02x%02x%02x' % (r, g, b)
+            return HexColor(hex_color)
+        except:
+            return "black"
+    
+    # Default fallback
+    return "black"
+
+def parse_border_style(style_str):
+    """Convert CSS border style to reportlab dash pattern"""
+    if not style_str:
+        return []  # solid
+    
+    style_str = style_str.lower().strip()
+    
+    if style_str == 'dashed':
+        return [3, 3]  # 3 points on, 3 points off
+    elif style_str == 'dotted':
+        return [1, 2]  # 1 point on, 2 points off
+    else:
+        return []  # solid for anything else
 
 class ProjectData:
     def __init__(self):
@@ -235,9 +305,20 @@ def generate_pdf():
                         can.setFont("Helvetica", 12)
                         can.setFillColor("black")
                         
-                        # Draw text with border box
-                        can.setStrokeColor("black")
-                        can.setLineWidth(1)
+                        # Get border properties from annotation
+                        border_color = parse_color(annotation.get('borderColor', 'black'))
+                        border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
+                        border_width = float(annotation.get('borderWidth', 1))
+                        
+                        # Apply border styling
+                        can.setStrokeColor(border_color)
+                        can.setLineWidth(border_width)
+                        if border_style:
+                            can.setDash(border_style)
+                        else:
+                            can.setDash([])  # solid line
+                        
+                        # Draw text with styled border box
                         can.rect(pdf_x, pdf_y, clipped_width, clipped_height, stroke=1, fill=0)
                         
                         # Draw text inside the box
@@ -249,8 +330,21 @@ def generate_pdf():
                         # Similar handling for date fields
                         can.setFont("Helvetica", 12)
                         can.setFillColor("black")
-                        can.setStrokeColor("black")
-                        can.setLineWidth(1)
+                        
+                        # Get border properties from annotation
+                        border_color = parse_color(annotation.get('borderColor', 'black'))
+                        border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
+                        border_width = float(annotation.get('borderWidth', 1))
+                        
+                        # Apply border styling
+                        can.setStrokeColor(border_color)
+                        can.setLineWidth(border_width)
+                        if border_style:
+                            can.setDash(border_style)
+                        else:
+                            can.setDash([])  # solid line
+                        
+                        # Draw date with styled border box
                         can.rect(pdf_x, pdf_y, clipped_width, clipped_height, stroke=1, fill=0)
                         
                         text_x = pdf_x + 2

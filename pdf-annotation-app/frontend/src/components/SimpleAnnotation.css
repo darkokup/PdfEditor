@@ -47,11 +47,12 @@
   text-overflow: ellipsis;
 }
 
-/* Custom border styles */
+/* Custom border styles - removed to avoid conflicts with inline styles */
 .simple-annotation.border-none {
   border: none !important;
 }
 
+/* Border styles now handled via inline styles in component
 .simple-annotation.border-solid {
   border-width: 1px;
   border-style: solid;
@@ -66,6 +67,7 @@
   border-width: 1px;
   border-style: dotted;
 }
+*/
 
 .simple-annotation.transparent {
   background-color: transparent !important;

@@ -32,7 +32,8 @@
 
 .navigation-controls,
 .zoom-controls,
-.annotation-controls {
+.annotation-controls,
+.view-controls {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -73,7 +74,9 @@
 
 .navigation-controls button,
 .zoom-controls button,
-.annotation-mode-btn {
+.annotation-mode-btn,
+.view-mode-btn,
+.insert-page-btn {
   padding: 4px 8px; /* Reduced from 8px 12px for smaller buttons */
   border: 1px solid #007acc;
   background-color: #007acc;
@@ -89,24 +92,40 @@
   justify-content: center;
 }
 
-.annotation-mode-btn.active {
+.annotation-mode-btn.active,
+.view-mode-btn.active {
   background-color: #28a745;
   border-color: #28a745;
 }
 
-.annotation-mode-btn.active:hover {
+.insert-page-btn {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+
+.insert-page-btn:hover {
+  background-color: #e0a800;
+  border-color: #e0a800;
+}
+
+.annotation-mode-btn.active:hover,
+.view-mode-btn.active:hover {
   background-color: #218838;
 }
 
 .navigation-controls button:hover,
 .zoom-controls button:hover,
-.annotation-mode-btn:hover {
+.annotation-mode-btn:hover,
+.view-mode-btn:hover {
   background-color: #005a9e;
 }
 
 .navigation-controls button:disabled,
 .zoom-controls button:disabled,
-.annotation-mode-btn:disabled {
+.annotation-mode-btn:disabled,
+.view-mode-btn:disabled,
+.insert-page-btn:disabled {
   background-color: #ccc;
   border-color: #ccc;
   cursor: not-allowed;
@@ -118,6 +137,7 @@
   padding: 20px;
   background-color: #f0f0f0;
   position: relative;
+  scroll-behavior: smooth; /* Enable smooth scrolling */
 }
 
 .pdf-content-wrapper {
@@ -135,6 +155,18 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   overflow: hidden;
+  margin-bottom: 20px; /* Add margin for continuous scroll mode */
+}
+
+.pdf-pages-continuous {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.pdf-pages-continuous .pdf-page-wrapper {
+  margin-bottom: 0; /* Remove margin when gap is used */
 }
 
 /* Annotation Overlay Styles */
@@ -144,7 +176,20 @@
   left: 0;
   pointer-events: auto;
   z-index: 1000;
+  cursor: default;
   /* Dimensions will be set dynamically via JavaScript */
+}
+
+.annotation-overlay.text-mode {
+  cursor: text;
+}
+
+.annotation-overlay.date-mode {
+  cursor: copy;
+}
+
+.annotation-overlay.crosshair-mode {
+  cursor: crosshair;
 }
 
 .annotation-overlay.drop-active {

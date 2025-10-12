@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Document, Page } from 'react-pdf';
 import { Annotation } from '../types';
 import AnnotationOverlaySimple from './AnnotationOverlaySimple';
+import InsertPageDialog from './InsertPageDialog';
 import './PDFViewer.css';
 
 // Import required CSS for react-pdf
@@ -14,6 +15,8 @@ interface PDFViewerProps {
   onAnnotationAdd: (annotation: Omit<Annotation, 'id' | 'created_at'>) => void;
   onAnnotationUpdate: (id: string, updates: Partial<Annotation>) => void;
   onAnnotationDelete: (id: string) => void;
+  onInsertPageBefore?: (pageIndex: number) => void;
+  onInsertPageAfter?: (pageIndex: number) => void;
 }
 
 const PDFViewer: React.FC<PDFViewerProps> = ({
@@ -22,6 +25,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   onAnnotationAdd,
   onAnnotationUpdate,
   onAnnotationDelete,
+  onInsertPageBefore,
+  onInsertPageAfter,
 }) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -29,6 +34,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [scale, setScale] = useState<number>(1.0);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState<boolean>(false);
   const [annotationMode, setAnnotationMode] = useState<'text' | 'date' | null>(null);
+  const [continuousScroll, setContinuousScroll] = useState<boolean>(true); // New state for continuous scrolling
+  const containerRef = useRef<HTMLDivElement>(null); // Ref for scroll container
+  const [showInsertPageDialog, setShowInsertPageDialog] = useState<boolean>(false); // Dialog for page insertion
 
   // Configure PDF.js worker with multiple fallback methods
   useEffect(() => {
@@ -137,6 +145,31 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     };
   }, []); // Empty dependency array - only cleanup on unmount
 
+  // Add scroll listener to update current page in continuous mode
+  useEffect(() => {
+    if (!continuousScroll || !containerRef.current) return;
+
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      
+      const pageHeight = 842 * scale + 20; // A4 height + margin
+      const scrollTop = containerRef.current.scrollTop;
+      const newCurrentPage = Math.floor(scrollTop / pageHeight) + 1;
+      
+      if (newCurrentPage !== currentPage && newCurrentPage >= 1 && newCurrentPage <= numPages) {
+        setCurrentPage(newCurrentPage);
+        setPageInputValue(newCurrentPage.toString());
+      }
+    };
+
+    const container = containerRef.current;
+    container.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [continuousScroll, scale, currentPage, numPages]);
+
   // Add keyboard and mouse wheel event listeners for zoom controls
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -187,9 +220,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     // Don't reset state on error to avoid infinite reload loops
   }, [pdfUrl, pdfData]);
 
-  const handlePageDrop = useCallback((x: number, y: number) => {
+  const handlePageDrop = useCallback((x: number, y: number, pageIndex?: number) => {
     // Only add annotation if a mode is selected
     if (!annotationMode) return;
+    
+    // Use provided pageIndex if available (for continuous mode), otherwise use currentPage
+    const targetPage = pageIndex !== undefined ? pageIndex : currentPage - 1;
     
     const newAnnotation: Omit<Annotation, 'id' | 'created_at'> = {
       type: annotationMode,
@@ -197,30 +233,60 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       y,
       width: annotationMode === 'text' ? 200 : 150,
       height: 30,
-      page: currentPage - 1, // Convert to 0-based indexing for backend
+      page: targetPage, // Use calculated target page
       value: annotationMode === 'text' ? 'Enter text...' : new Date().toLocaleDateString(),
+      borderStyle: 'none', // Default to "No Line" for new annotations
     };
     onAnnotationAdd(newAnnotation);
   }, [currentPage, onAnnotationAdd, annotationMode]);
+
+  // Create a page-specific drop handler for continuous mode
+  const createPageDropHandler = useCallback((pageIndex: number) => {
+    return (x: number, y: number) => handlePageDrop(x, y, pageIndex);
+  }, [handlePageDrop]);
 
   const handleAnnotationUpdate = useCallback((annotationId: string, updates: Partial<Annotation>) => {
     onAnnotationUpdate(annotationId, updates);
   }, [onAnnotationUpdate]);
 
   const goToPrevious = () => {
-    setCurrentPage(prev => {
-      const newPage = Math.max(1, prev - 1);
-      setPageInputValue(newPage.toString());
-      return newPage;
-    });
+    if (continuousScroll) {
+      // Smooth scroll to previous page
+      const pageHeight = 842 * scale + 20; // A4 height + margin
+      if (containerRef.current) {
+        containerRef.current.scrollBy({
+          top: -pageHeight,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      // Instant page switch
+      setCurrentPage(prev => {
+        const newPage = Math.max(1, prev - 1);
+        setPageInputValue(newPage.toString());
+        return newPage;
+      });
+    }
   };
 
   const goToNext = () => {
-    setCurrentPage(prev => {
-      const newPage = Math.min(numPages, prev + 1);
-      setPageInputValue(newPage.toString());
-      return newPage;
-    });
+    if (continuousScroll) {
+      // Smooth scroll to next page
+      const pageHeight = 842 * scale + 20; // A4 height + margin
+      if (containerRef.current) {
+        containerRef.current.scrollBy({
+          top: pageHeight,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      // Instant page switch
+      setCurrentPage(prev => {
+        const newPage = Math.min(numPages, prev + 1);
+        setPageInputValue(newPage.toString());
+        return newPage;
+      });
+    }
   };
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,7 +307,20 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       return;
     }
     
-    setCurrentPage(pageNumber);
+    if (continuousScroll) {
+      // Smooth scroll to specific page
+      const pageHeight = 842 * scale + 20; // A4 height + margin
+      const targetScrollTop = (pageNumber - 1) * pageHeight;
+      
+      if (containerRef.current) {
+        containerRef.current.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      setCurrentPage(pageNumber);
+    }
   };
 
   const handlePageInputBlur = () => {
@@ -270,6 +349,26 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     setAnnotationMode(current => current === 'date' ? null : 'date');
   };
 
+  const toggleContinuousScroll = () => {
+    setContinuousScroll(prev => !prev);
+  };
+
+  const handleInsertPageClick = () => {
+    setShowInsertPageDialog(true);
+  };
+
+  const handleInsertBefore = () => {
+    if (onInsertPageBefore) {
+      onInsertPageBefore(currentPage - 1); // Convert to 0-based index
+    }
+  };
+
+  const handleInsertAfter = () => {
+    if (onInsertPageAfter) {
+      onInsertPageAfter(currentPage - 1); // Convert to 0-based index
+    }
+  };
+
   if (!pdfData || !pdfUrl) {
     return (
       <div className="pdf-viewer-placeholder">
@@ -280,8 +379,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       </div>
     );
   }
-
-  const currentPageAnnotations = annotations.filter(ann => ann.page === currentPage - 1);
 
   return (
     <div className="pdf-viewer">
@@ -304,6 +401,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           </form>
           <button onClick={goToNext} disabled={currentPage >= numPages} title="Next Page">
             ▶
+          </button>
+        </div>
+        
+        <div className="view-controls">
+          <button 
+            onClick={toggleContinuousScroll}
+            className={`view-mode-btn ${continuousScroll ? 'active' : ''}`}
+            title="Toggle Continuous Scroll"
+          >
+            📄
+          </button>
+          <button 
+            onClick={handleInsertPageClick}
+            className="insert-page-btn"
+            title="Insert Empty Page"
+          >
+            📄+
           </button>
         </div>
         
@@ -335,44 +449,95 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         </div>
       </div>
 
-      <div className="pdf-container">
+      <div className="pdf-container" ref={containerRef}>
         <div className="pdf-content-wrapper">
-          <div className="pdf-page-wrapper">
-            {(() => {
-              console.log('Rendering Document with URL:', pdfUrl);
-              return null;
-            })()}
-            <Document
-              file={pdfUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={onDocumentLoadError}
-              loading={<div>Loading PDF...</div>}
-              key={pdfData ? 'pdf-loaded' : 'no-pdf'}
-            >
-              <Page
-                pageNumber={currentPage}
+          {continuousScroll ? (
+            // Continuous scroll mode - render all pages
+            <div className="pdf-pages-continuous">
+              {(() => {
+                console.log('Rendering Document with URL:', pdfUrl);
+                return null;
+              })()}
+              <Document
+                file={pdfUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={<div>Loading PDF...</div>}
+                key={pdfData ? 'pdf-loaded' : 'no-pdf'}
+              >
+                {Array.from(new Array(numPages), (el, index) => (
+                  <div key={`page_${index + 1}`} className="pdf-page-wrapper">
+                    <Page
+                      pageNumber={index + 1}
+                      scale={scale}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      loading={<div>Loading page {index + 1}...</div>}
+                      error={<div>Error loading page {index + 1}</div>}
+                    />
+                    
+                    <AnnotationOverlaySimple
+                      annotations={annotations.filter(ann => ann.page === index)}
+                      scale={scale}
+                      onDrop={createPageDropHandler(index)}
+                      onAnnotationUpdate={handleAnnotationUpdate}
+                      onAnnotationDelete={onAnnotationDelete}
+                      isSettingsDialogOpen={isSettingsDialogOpen}
+                      onSettingsDialogOpenChange={setIsSettingsDialogOpen}
+                      annotationMode={annotationMode}
+                    />
+                  </div>
+                ))}
+              </Document>
+            </div>
+          ) : (
+            // Single page mode - render current page only
+            <div className="pdf-page-wrapper">
+              {(() => {
+                console.log('Rendering Document with URL:', pdfUrl);
+                return null;
+              })()}
+              <Document
+                file={pdfUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={<div>Loading PDF...</div>}
+                key={pdfData ? 'pdf-loaded' : 'no-pdf'}
+              >
+                <Page
+                  pageNumber={currentPage}
+                  scale={scale}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  loading={<div>Loading page...</div>}
+                  error={<div>Error loading page</div>}
+                  onLoadSuccess={() => {/* Page loaded successfully */}}
+                  onLoadError={(error) => console.warn('Page load error:', error)}
+                />
+              </Document>
+              
+              <AnnotationOverlaySimple
+                annotations={annotations.filter(ann => ann.page === currentPage - 1)}
                 scale={scale}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                loading={<div>Loading page...</div>}
-                error={<div>Error loading page</div>}
-                onLoadSuccess={() => {/* Page loaded successfully */}}
-                onLoadError={(error) => console.warn('Page load error:', error)}
+                onDrop={(x, y) => handlePageDrop(x, y, currentPage - 1)}
+                onAnnotationUpdate={handleAnnotationUpdate}
+                onAnnotationDelete={onAnnotationDelete}
+                isSettingsDialogOpen={isSettingsDialogOpen}
+                onSettingsDialogOpenChange={setIsSettingsDialogOpen}
+                annotationMode={annotationMode}
               />
-            </Document>
-            
-            <AnnotationOverlaySimple
-              annotations={currentPageAnnotations}
-              scale={scale}
-              onDrop={handlePageDrop}
-              onAnnotationUpdate={handleAnnotationUpdate}
-              onAnnotationDelete={onAnnotationDelete}
-              isSettingsDialogOpen={isSettingsDialogOpen}
-              onSettingsDialogOpenChange={setIsSettingsDialogOpen}
-            />
-          </div>
+            </div>
+          )}
         </div>
       </div>
+      
+      <InsertPageDialog
+        isOpen={showInsertPageDialog}
+        currentPage={currentPage}
+        onClose={() => setShowInsertPageDialog(false)}
+        onInsertBefore={handleInsertBefore}
+        onInsertAfter={handleInsertAfter}
+      />
     </div>
   );
 };

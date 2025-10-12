@@ -3,6 +3,41 @@
   position: relative;
 }
 
+/* Remove and Settings button styles */
+.simple-remove-btn,
+.simple-settings-btn {
+  position: absolute;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.simple-remove-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.simple-remove-btn:hover {
+  background-color: #c82333;
+  transform: scale(1.1);
+}
+
+.simple-settings-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.simple-settings-btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+}
+
+/* Legacy menu styles - can be removed */
 .simple-annotation.menu-open {
   z-index: 1010 !important; /* Ensure annotation with open menu stays on top */
 }
@@ -75,6 +110,29 @@
 
 .simple-annotation.opaque {
   background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  background-color: #007bff;
+  border: 1px solid white;
+  z-index: 1002;
+  border-radius: 2px;
+}
+
+.resize-handle-top,
+.resize-handle-bottom {
+  cursor: ns-resize;
+}
+
+.resize-handle-left,
+.resize-handle-right {
+  cursor: ew-resize;
+}
+
+.resize-handle:hover {
+  background-color: #0056b3;
 }
 
 /* Dynamic positioning and sizing will still need inline styles */

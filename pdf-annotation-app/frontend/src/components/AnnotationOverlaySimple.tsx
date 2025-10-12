@@ -11,6 +11,7 @@ interface AnnotationOverlayProps {
   isSettingsDialogOpen?: boolean; // New prop to disable annotation adding
   onSettingsDialogOpenChange?: (isOpen: boolean) => void; // Callback for settings dialog state
   pageDimensions?: { width: number; height: number }; // Page dimensions for calculating max width/height
+  annotationMode?: 'text' | 'date' | null; // Add annotation mode prop for cursor styling
 }
 
 const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
@@ -22,6 +23,7 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   isSettingsDialogOpen = false, // Default to false if not provided
   onSettingsDialogOpenChange,
   pageDimensions,
+  annotationMode = null, // Default to null if not provided
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [pdfCanvas, setPdfCanvas] = useState<HTMLCanvasElement | null>(null);
@@ -126,10 +128,24 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
     onDrop(boundedX, boundedY);
   };
 
+  // Get cursor class based on annotation mode
+  const getCursorClass = () => {
+    if (!annotationMode) return '';
+    
+    switch (annotationMode) {
+      case 'text':
+        return 'text-mode';
+      case 'date':
+        return 'date-mode';
+      default:
+        return 'crosshair-mode';
+    }
+  };
+
   return (
     <div 
       ref={overlayRef}
-      className="annotation-overlay"
+      className={`annotation-overlay ${getCursorClass()}`}
       onClick={handleClick}
     >
       {annotations.map((annotation) => (

@@ -135,6 +135,40 @@ const App: React.FC = () => {
     }
   };
 
+  const handleInsertPageBefore = async (pageIndex: number) => {
+    if (!pdfData) return;
+    
+    try {
+      const response = await api.insertPage(pdfData, pageIndex, 'before');
+      if (response.success) {
+        setPdfData(response.pdfData);
+      } else {
+        console.error('Failed to insert page:', response.error);
+        alert('Failed to insert page. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error inserting page:', error);
+      alert('Error inserting page. Please try again.');
+    }
+  };
+
+  const handleInsertPageAfter = async (pageIndex: number) => {
+    if (!pdfData) return;
+    
+    try {
+      const response = await api.insertPage(pdfData, pageIndex, 'after');
+      if (response.success) {
+        setPdfData(response.pdfData);
+      } else {
+        console.error('Failed to insert page:', response.error);
+        alert('Failed to insert page. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error inserting page:', error);
+      alert('Error inserting page. Please try again.');
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -203,6 +237,8 @@ const App: React.FC = () => {
               onAnnotationAdd={handlePDFClick}
               onAnnotationUpdate={handleAnnotationUpdate}
               onAnnotationDelete={handleAnnotationDelete}
+              onInsertPageBefore={handleInsertPageBefore}
+              onInsertPageAfter={handleInsertPageAfter}
             />
           ) : (
             <SimplePDFDisplay 

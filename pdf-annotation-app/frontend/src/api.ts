@@ -59,6 +59,15 @@ export const api = {
     return response.data;
   },
 
+  insertPage: async (pdfData: string, pageIndex: number, position: 'before' | 'after') => {
+    const response = await axios.post(`${API_BASE_URL}/insert-page`, {
+      pdfData,
+      pageIndex,
+      position
+    });
+    return response.data;
+  },
+
   healthCheck: async () => {
     const response = await axios.get(`${API_BASE_URL}/health`);
     return response.data;

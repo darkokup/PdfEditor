@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'], 
+CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'], 
      allow_headers=['Content-Type'], 
      methods=['GET', 'POST', 'OPTIONS'])
 
@@ -83,7 +83,9 @@ def parse_border_style(style_str):
     
     style_str = style_str.lower().strip()
     
-    if style_str == 'dashed':
+    if style_str == 'none':
+        return None  # Special value for no border
+    elif style_str == 'dashed':
         return [3, 3]  # 3 points on, 3 points off
     elif style_str == 'dotted':
         return [1, 2]  # 1 point on, 2 points off
@@ -310,16 +312,21 @@ def generate_pdf():
                         border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
                         border_width = float(annotation.get('borderWidth', 1))
                         
-                        # Apply border styling
-                        can.setStrokeColor(border_color)
-                        can.setLineWidth(border_width)
-                        if border_style:
-                            can.setDash(border_style)
-                        else:
-                            can.setDash([])  # solid line
+                        # Determine if border should be drawn
+                        should_draw_border = border_style is not None
                         
-                        # Draw text with styled border box
-                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, stroke=1, fill=0)
+                        if should_draw_border:
+                            # Apply border styling
+                            can.setStrokeColor(border_color)
+                            can.setLineWidth(border_width)
+                            if border_style:
+                                can.setDash(border_style)
+                            else:
+                                can.setDash([])  # solid line
+                        
+                        # Draw text with border box (stroke=1 if border, stroke=0 if no border)
+                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
+                                stroke=1 if should_draw_border else 0, fill=0)
                         
                         # Draw text inside the box
                         text_x = pdf_x + 2  # small padding
@@ -336,16 +343,21 @@ def generate_pdf():
                         border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
                         border_width = float(annotation.get('borderWidth', 1))
                         
-                        # Apply border styling
-                        can.setStrokeColor(border_color)
-                        can.setLineWidth(border_width)
-                        if border_style:
-                            can.setDash(border_style)
-                        else:
-                            can.setDash([])  # solid line
+                        # Determine if border should be drawn
+                        should_draw_border = border_style is not None
                         
-                        # Draw date with styled border box
-                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, stroke=1, fill=0)
+                        if should_draw_border:
+                            # Apply border styling
+                            can.setStrokeColor(border_color)
+                            can.setLineWidth(border_width)
+                            if border_style:
+                                can.setDash(border_style)
+                            else:
+                                can.setDash([])  # solid line
+                        
+                        # Draw date with border box (stroke=1 if border, stroke=0 if no border)
+                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
+                                stroke=1 if should_draw_border else 0, fill=0)
                         
                         text_x = pdf_x + 2
                         text_y = pdf_y + (clipped_height / 2) - 3
@@ -396,6 +408,92 @@ def generate_pdf():
     
     except Exception as e:
         return jsonify({'error': f'Error generating PDF: {str(e)}'}), 500
+
+@app.route('/api/insert-page', methods=['POST'])
+def insert_page():
+    """Insert an empty page into the PDF at specified position"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        # Get required parameters
+        pdf_data = data.get('pdfData')
+        page_index = data.get('pageIndex')  # 0-based index where to insert
+        position = data.get('position')  # 'before' or 'after'
+        
+        if not pdf_data:
+            return jsonify({'error': 'PDF data is required'}), 400
+            
+        if page_index is None:
+            return jsonify({'error': 'Page index is required'}), 400
+            
+        if position not in ['before', 'after']:
+            return jsonify({'error': 'Position must be "before" or "after"'}), 400
+        
+        # Decode the PDF data
+        pdf_bytes = base64.b64decode(pdf_data)
+        
+        # Read the original PDF
+        reader = PdfReader(BytesIO(pdf_bytes))
+        writer = PdfWriter()
+        
+        # Calculate actual insertion index
+        if position == 'after':
+            insert_index = page_index + 1
+        else:
+            insert_index = page_index
+            
+        # Ensure insert_index is within valid range
+        insert_index = max(0, min(insert_index, len(reader.pages)))
+        
+        # Create an empty page with the same size as the first page
+        if len(reader.pages) > 0:
+            first_page = reader.pages[0]
+            page_width = float(first_page.mediabox.width)
+            page_height = float(first_page.mediabox.height)
+        else:
+            # Default to letter size if no pages exist
+            page_width, page_height = letter
+        
+        # Create a blank page using reportlab
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
+        c.showPage()  # Create an empty page
+        c.save()
+        buffer.seek(0)
+        
+        # Read the blank page
+        blank_page_reader = PdfReader(buffer)
+        blank_page = blank_page_reader.pages[0]
+        
+        # Add pages to writer in correct order
+        for i, page in enumerate(reader.pages):
+            if i == insert_index:
+                writer.add_page(blank_page)
+            writer.add_page(page)
+        
+        # If inserting at the end, add the blank page
+        if insert_index >= len(reader.pages):
+            writer.add_page(blank_page)
+        
+        # Write the modified PDF to a buffer
+        output_buffer = BytesIO()
+        writer.write(output_buffer)
+        output_buffer.seek(0)
+        
+        # Convert to base64 for response
+        modified_pdf_data = base64.b64encode(output_buffer.getvalue()).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'pdfData': modified_pdf_data,
+            'message': f'Empty page inserted {position} page {page_index + 1}'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Error inserting page: {str(e)}'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

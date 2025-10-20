@@ -11,7 +11,7 @@ interface AnnotationOverlayProps {
   isSettingsDialogOpen?: boolean; // New prop to disable annotation adding
   onSettingsDialogOpenChange?: (isOpen: boolean) => void; // Callback for settings dialog state
   pageDimensions?: { width: number; height: number }; // Page dimensions for calculating max width/height
-  annotationMode?: 'text' | 'date' | null; // Add annotation mode prop for cursor styling
+  annotationMode?: 'annotation' | null; // Add annotation mode prop for cursor styling
 }
 
 const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
@@ -133,10 +133,8 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
     if (!annotationMode) return '';
     
     switch (annotationMode) {
-      case 'text':
-        return 'text-mode';
-      case 'date':
-        return 'date-mode';
+      case 'annotation':
+        return 'annotation-mode';
       default:
         return 'crosshair-mode';
     }

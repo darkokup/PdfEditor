@@ -1,6 +1,6 @@
 export interface Annotation {
   id: string;
-  type: 'text' | 'date';
+  type: 'text' | 'date' | 'signature';
   x: number;
   y: number;
   width: number;

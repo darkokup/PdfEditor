@@ -28,6 +28,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<'settings' | 'value'>('settings');
   const [isSelected, setIsSelected] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
@@ -48,6 +49,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   };
 
   const handleSettingsClick = () => {
+    setSettingsInitialTab('settings');
     setShowSettings(true);
     onSettingsDialogOpenChange?.(true); // Notify that settings dialog is opening
   };
@@ -58,10 +60,9 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent overlay from handling this click
-    const newValue = prompt('Edit value:', annotation.value);
-    if (newValue !== null) {
-      onUpdate(annotation.id, { value: newValue });
-    }
+    setSettingsInitialTab('value');
+    setShowSettings(true);
+    onSettingsDialogOpenChange?.(true); // Notify that settings dialog is opening
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -399,6 +400,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
         }}
         onSave={handleSettingsSave}
         pageDimensions={pageDimensions}
+        initialTab={settingsInitialTab}
       />
     </>
   );

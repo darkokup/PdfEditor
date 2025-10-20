@@ -362,6 +362,36 @@ def generate_pdf():
                         text_x = pdf_x + 2
                         text_y = pdf_y + (clipped_height / 2) - 3
                         can.drawString(text_x, text_y, value)
+                        
+                    elif annotation.get('type') == 'signature':
+                        # Handle signature fields - similar to text but potentially with italic font
+                        can.setFont("Helvetica-Oblique", 12)  # Italic for signature style
+                        can.setFillColor("black")
+                        
+                        # Get border properties from annotation
+                        border_color = parse_color(annotation.get('borderColor', 'black'))
+                        border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
+                        border_width = float(annotation.get('borderWidth', 1))
+                        
+                        # Determine if border should be drawn
+                        should_draw_border = border_style is not None
+                        
+                        if should_draw_border:
+                            # Apply border styling
+                            can.setStrokeColor(border_color)
+                            can.setLineWidth(border_width)
+                            if border_style:
+                                can.setDash(border_style)
+                            else:
+                                can.setDash([])  # solid line
+                        
+                        # Draw signature with border box (stroke=1 if border, stroke=0 if no border)
+                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
+                                stroke=1 if should_draw_border else 0, fill=0)
+                        
+                        text_x = pdf_x + 2
+                        text_y = pdf_y + (clipped_height / 2) - 3
+                        can.drawString(text_x, text_y, value)
                 
                 can.save()
                 packet.seek(0)

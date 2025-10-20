@@ -33,7 +33,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [pageInputValue, setPageInputValue] = useState<string>('1'); // For the page input box
   const [scale, setScale] = useState<number>(1.0);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState<boolean>(false);
-  const [annotationMode, setAnnotationMode] = useState<'text' | 'date' | null>(null);
+  const [annotationMode, setAnnotationMode] = useState<'annotation' | null>(null);
   const [continuousScroll, setContinuousScroll] = useState<boolean>(true); // New state for continuous scrolling
   const containerRef = useRef<HTMLDivElement>(null); // Ref for scroll container
   const [showInsertPageDialog, setShowInsertPageDialog] = useState<boolean>(false); // Dialog for page insertion
@@ -228,13 +228,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     const targetPage = pageIndex !== undefined ? pageIndex : currentPage - 1;
     
     const newAnnotation: Omit<Annotation, 'id' | 'created_at'> = {
-      type: annotationMode,
+      type: 'text', // Always default to text, user can change type in the annotation dialog
       x,
       y,
-      width: annotationMode === 'text' ? 200 : 150,
+      width: 200,
       height: 30,
       page: targetPage, // Use calculated target page
-      value: annotationMode === 'text' ? 'Enter text...' : new Date().toLocaleDateString(),
+      value: 'Annotation',
       borderStyle: 'none', // Default to "No Line" for new annotations
     };
     onAnnotationAdd(newAnnotation);
@@ -341,12 +341,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     setScale(prev => Math.max(0.5, prev - 0.2));
   };
 
-  const handleTextModeToggle = () => {
-    setAnnotationMode(current => current === 'text' ? null : 'text');
-  };
-
-  const handleDateModeToggle = () => {
-    setAnnotationMode(current => current === 'date' ? null : 'date');
+  const handleAnnotationModeToggle = () => {
+    setAnnotationMode(current => current === 'annotation' ? null : 'annotation');
   };
 
   const toggleContinuousScroll = () => {
@@ -423,18 +419,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         
         <div className="annotation-controls">
           <button 
-            onClick={handleTextModeToggle} 
-            className={`annotation-mode-btn ${annotationMode === 'text' ? 'active' : ''}`}
-            title="Add Text Annotation"
+            onClick={handleAnnotationModeToggle} 
+            className={`annotation-mode-btn ${annotationMode === 'annotation' ? 'active' : ''}`}
+            title="Add Annotation"
           >
-            T
-          </button>
-          <button 
-            onClick={handleDateModeToggle} 
-            className={`annotation-mode-btn ${annotationMode === 'date' ? 'active' : ''}`}
-            title="Add Date Annotation"
-          >
-            📅
+            �
           </button>
         </div>
         

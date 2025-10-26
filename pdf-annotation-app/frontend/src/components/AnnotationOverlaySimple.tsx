@@ -8,10 +8,15 @@ interface AnnotationOverlayProps {
   onDrop: (x: number, y: number) => void;
   onAnnotationUpdate: (annotationId: string, updates: Partial<Annotation>) => void;
   onAnnotationDelete: (annotationId: string) => void;
+  onAnnotationDeleteMultiple?: (annotationIds: string[]) => void; // Delete multiple annotations
+  onRemoveFromSelection?: (id: string) => void; // Remove annotation from selection
   isSettingsDialogOpen?: boolean; // New prop to disable annotation adding
   onSettingsDialogOpenChange?: (isOpen: boolean) => void; // Callback for settings dialog state
   pageDimensions?: { width: number; height: number }; // Page dimensions for calculating max width/height
   annotationMode?: 'annotation' | null; // Add annotation mode prop for cursor styling
+  selectedAnnotations?: Set<string>; // Selected annotation IDs
+  onAnnotationSelect?: (id: string, ctrlKey: boolean, shiftKey: boolean) => void; // Callback when annotation is selected
+  onClearSelection?: () => void; // Callback to clear all selections
 }
 
 const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
@@ -20,10 +25,15 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   onDrop,
   onAnnotationUpdate,
   onAnnotationDelete,
+  onAnnotationDeleteMultiple,
+  onRemoveFromSelection,
   isSettingsDialogOpen = false, // Default to false if not provided
   onSettingsDialogOpenChange,
   pageDimensions,
   annotationMode = null, // Default to null if not provided
+  selectedAnnotations = new Set(), // Default to empty set
+  onAnnotationSelect,
+  onClearSelection,
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [pdfCanvas, setPdfCanvas] = useState<HTMLCanvasElement | null>(null);
@@ -97,6 +107,11 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent) => {
+    // Clear selection when clicking on overlay (not on annotation)
+    if (e.target === overlayRef.current) {
+      onClearSelection?.();
+    }
+
     // Don't add annotations if settings dialog is open
     if (isSettingsDialogOpen) {
       return;
@@ -155,10 +170,15 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
             onAnnotationUpdate(id, updates);
           }}
           onDelete={onAnnotationDelete}
+          onDeleteMultiple={onAnnotationDeleteMultiple}
+          onRemoveFromSelection={onRemoveFromSelection}
           onDragStart={suppressClick}
           onDragEnd={suppressClick}
           onSettingsDialogOpenChange={onSettingsDialogOpenChange}
           pageDimensions={pageDimensions || calculatedPageDimensions || undefined}
+          isSelected={selectedAnnotations.has(annotation.id)}
+          onSelect={(ctrlKey, shiftKey) => onAnnotationSelect?.(annotation.id, ctrlKey, shiftKey)}
+          selectedAnnotationIds={Array.from(selectedAnnotations)}
         />
       ))}
     </div>

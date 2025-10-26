@@ -3,6 +3,7 @@ import { Document, Page } from 'react-pdf';
 import { Annotation } from '../types';
 import AnnotationOverlaySimple from './AnnotationOverlaySimple';
 import InsertPageDialog from './InsertPageDialog';
+import DeleteSelectedConfirmationDialog from './DeleteSelectedConfirmationDialog';
 import './PDFViewer.css';
 
 // Import required CSS for react-pdf
@@ -37,6 +38,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [continuousScroll, setContinuousScroll] = useState<boolean>(true); // New state for continuous scrolling
   const containerRef = useRef<HTMLDivElement>(null); // Ref for scroll container
   const [showInsertPageDialog, setShowInsertPageDialog] = useState<boolean>(false); // Dialog for page insertion
+  const [selectedAnnotations, setSelectedAnnotations] = useState<Set<string>>(new Set()); // Track selected annotation IDs
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false); // Dialog for delete confirmation
 
   // Configure PDF.js worker with multiple fallback methods
   useEffect(() => {
@@ -365,6 +368,212 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     }
   };
 
+  const handleAnnotationDeleteMultiple = useCallback((ids: string[]) => {
+    // Delete all annotations with the given IDs
+    ids.forEach(id => onAnnotationDelete(id));
+    // Clear selection after deleting
+    setSelectedAnnotations(new Set());
+  }, [onAnnotationDelete]);
+
+  const handleRemoveFromSelection = useCallback((id: string) => {
+    setSelectedAnnotations(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    const selectedIds = Array.from(selectedAnnotations);
+    handleAnnotationDeleteMultiple(selectedIds);
+    setShowDeleteConfirmation(false);
+  }, [selectedAnnotations, handleAnnotationDeleteMultiple]);
+
+  const handleCancelDelete = useCallback(() => {
+    setShowDeleteConfirmation(false);
+  }, []);
+
+  // Sort annotations by page number first, then by vertical position (y)
+  const getSortedAnnotations = useCallback(() => {
+    return [...annotations].sort((a, b) => {
+      if (a.page !== b.page) {
+        return a.page - b.page;
+      }
+      return a.y - b.y;
+    });
+  }, [annotations]);
+
+  // Selection handlers
+  const handleAnnotationSelect = useCallback((id: string, ctrlKey: boolean, shiftKey: boolean) => {
+    if (shiftKey) {
+      // Range selection mode: select from last selected to clicked annotation
+      const sortedAnnotations = getSortedAnnotations();
+      
+      // Find the anchor (last selected annotation or first annotation)
+      let anchorId: string;
+      if (selectedAnnotations.size > 0) {
+        const selectedIds = Array.from(selectedAnnotations);
+        anchorId = selectedIds[selectedIds.length - 1];
+      } else {
+        // No selection - start from first annotation
+        anchorId = sortedAnnotations[0]?.id;
+      }
+      
+      if (anchorId) {
+        const anchorIndex = sortedAnnotations.findIndex(ann => ann.id === anchorId);
+        const clickedIndex = sortedAnnotations.findIndex(ann => ann.id === id);
+        
+        if (anchorIndex >= 0 && clickedIndex >= 0) {
+          // Select all annotations between anchor and clicked (inclusive)
+          const startIndex = Math.min(anchorIndex, clickedIndex);
+          const endIndex = Math.max(anchorIndex, clickedIndex);
+          const rangeIds = sortedAnnotations
+            .slice(startIndex, endIndex + 1)
+            .map(ann => ann.id);
+          
+          setSelectedAnnotations(new Set(rangeIds));
+        }
+      }
+    } else if (ctrlKey) {
+      // Toggle selection mode: add or remove from selection
+      setSelectedAnnotations(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(id)) {
+          newSet.delete(id);
+        } else {
+          newSet.add(id);
+        }
+        return newSet;
+      });
+    } else {
+      // Single-select mode: select only this annotation
+      setSelectedAnnotations(new Set([id]));
+    }
+  }, [selectedAnnotations, getSortedAnnotations]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedAnnotations(new Set());
+  }, []);
+
+  // Keyboard shortcuts: DEL to delete selected annotations, ESC to clear selection
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      // Handle DEL key - show confirmation before deleting selected annotations
+      if (e.key === 'Delete' && selectedAnnotations.size > 0) {
+        e.preventDefault();
+        setShowDeleteConfirmation(true);
+        return;
+      }
+      
+      // Handle ESC key
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (selectedAnnotations.size > 0) {
+          // Clear selection if annotations are selected
+          handleClearSelection();
+        } else if (annotationMode === 'annotation') {
+          // Toggle off annotation mode if no selection
+          setAnnotationMode(null);
+        }
+        return;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeydown);
+    };
+  }, [selectedAnnotations, handleClearSelection, annotationMode]);
+
+  // Navigate to the next annotation
+  const goToNextAnnotation = useCallback(() => {
+    if (annotations.length === 0) return;
+    
+    const sortedAnnotations = getSortedAnnotations();
+    let nextAnnotation: Annotation | undefined;
+
+    // If there's a selected annotation, find the next one after it
+    if (selectedAnnotations.size > 0) {
+      const selectedIds = Array.from(selectedAnnotations);
+      const lastSelectedId = selectedIds[selectedIds.length - 1];
+      const currentIndex = sortedAnnotations.findIndex(ann => ann.id === lastSelectedId);
+      
+      if (currentIndex >= 0 && currentIndex < sortedAnnotations.length - 1) {
+        nextAnnotation = sortedAnnotations[currentIndex + 1];
+      } else {
+        // Wrap around to first annotation
+        nextAnnotation = sortedAnnotations[0];
+      }
+    } else {
+      // No selection - start from first annotation
+      nextAnnotation = sortedAnnotations[0];
+    }
+    
+    if (nextAnnotation) {
+      // Select only this annotation
+      setSelectedAnnotations(new Set([nextAnnotation.id]));
+      
+      // Navigate to the page containing the annotation
+      setCurrentPage(nextAnnotation.page + 1); // Convert from 0-based to 1-based
+      setPageInputValue((nextAnnotation.page + 1).toString());
+      
+      // Scroll to the annotation if in continuous mode
+      if (continuousScroll && containerRef.current) {
+        setTimeout(() => {
+          const annotationElement = document.querySelector(`[data-annotation-id="${nextAnnotation!.id}"]`);
+          if (annotationElement) {
+            annotationElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  }, [annotations, selectedAnnotations, continuousScroll, getSortedAnnotations]);
+
+  // Navigate to the previous annotation
+  const goToPreviousAnnotation = useCallback(() => {
+    if (annotations.length === 0) return;
+    
+    const sortedAnnotations = getSortedAnnotations();
+    let previousAnnotation: Annotation | undefined;
+
+    // If there's a selected annotation, find the previous one before it
+    if (selectedAnnotations.size > 0) {
+      const selectedIds = Array.from(selectedAnnotations);
+      const firstSelectedId = selectedIds[0];
+      const currentIndex = sortedAnnotations.findIndex(ann => ann.id === firstSelectedId);
+      
+      if (currentIndex > 0) {
+        previousAnnotation = sortedAnnotations[currentIndex - 1];
+      } else {
+        // Wrap around to last annotation
+        previousAnnotation = sortedAnnotations[sortedAnnotations.length - 1];
+      }
+    } else {
+      // No selection - start from last annotation
+      previousAnnotation = sortedAnnotations[sortedAnnotations.length - 1];
+    }
+    
+    if (previousAnnotation) {
+      // Select only this annotation
+      setSelectedAnnotations(new Set([previousAnnotation.id]));
+      
+      // Navigate to the page containing the annotation
+      setCurrentPage(previousAnnotation.page + 1); // Convert from 0-based to 1-based
+      setPageInputValue((previousAnnotation.page + 1).toString());
+      
+      // Scroll to the annotation if in continuous mode
+      if (continuousScroll && containerRef.current) {
+        setTimeout(() => {
+          const annotationElement = document.querySelector(`[data-annotation-id="${previousAnnotation!.id}"]`);
+          if (annotationElement) {
+            annotationElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  }, [annotations, selectedAnnotations, continuousScroll, getSortedAnnotations]);
+
   if (!pdfData || !pdfUrl) {
     return (
       <div className="pdf-viewer-placeholder">
@@ -423,7 +632,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             className={`annotation-mode-btn ${annotationMode === 'annotation' ? 'active' : ''}`}
             title="Add Annotation"
           >
-            �
+            📝
+          </button>
+          <button
+            onClick={goToPreviousAnnotation}
+            disabled={annotations.length === 0}
+            title="Go to previous annotation"
+            className="control-button"
+          >
+            ⬆️
+          </button>
+          <button
+            onClick={goToNextAnnotation}
+            disabled={annotations.length === 0}
+            title="Go to next annotation"
+            className="control-button"
+          >
+            ⬇️
           </button>
         </div>
         
@@ -471,9 +696,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                       onDrop={createPageDropHandler(index)}
                       onAnnotationUpdate={handleAnnotationUpdate}
                       onAnnotationDelete={onAnnotationDelete}
+                      onAnnotationDeleteMultiple={handleAnnotationDeleteMultiple}
                       isSettingsDialogOpen={isSettingsDialogOpen}
                       onSettingsDialogOpenChange={setIsSettingsDialogOpen}
                       annotationMode={annotationMode}
+                      selectedAnnotations={selectedAnnotations}
+                      onAnnotationSelect={handleAnnotationSelect}
+                      onClearSelection={handleClearSelection}
+                      onRemoveFromSelection={handleRemoveFromSelection}
                     />
                   </div>
                 ))}
@@ -511,9 +741,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                 onDrop={(x, y) => handlePageDrop(x, y, currentPage - 1)}
                 onAnnotationUpdate={handleAnnotationUpdate}
                 onAnnotationDelete={onAnnotationDelete}
+                onAnnotationDeleteMultiple={handleAnnotationDeleteMultiple}
                 isSettingsDialogOpen={isSettingsDialogOpen}
                 onSettingsDialogOpenChange={setIsSettingsDialogOpen}
                 annotationMode={annotationMode}
+                selectedAnnotations={selectedAnnotations}
+                onAnnotationSelect={handleAnnotationSelect}
+                onClearSelection={handleClearSelection}
+                onRemoveFromSelection={handleRemoveFromSelection}
               />
             </div>
           )}
@@ -526,6 +761,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         onClose={() => setShowInsertPageDialog(false)}
         onInsertBefore={handleInsertBefore}
         onInsertAfter={handleInsertAfter}
+      />
+      
+      <DeleteSelectedConfirmationDialog
+        isOpen={showDeleteConfirmation}
+        selectedCount={selectedAnnotations.size}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

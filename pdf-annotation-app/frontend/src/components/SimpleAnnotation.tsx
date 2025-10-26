@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Annotation } from '../types';
 import AnnotationSettingsDialog from './AnnotationSettingsDialog';
+import DeleteConfirmationDialog from './DeleteConfirmationDialog';
 import './SimpleAnnotation.css';
 
 interface SimpleAnnotationProps {
@@ -9,10 +10,15 @@ interface SimpleAnnotationProps {
   scale: number;
   onUpdate: (id: string, updates: Partial<Annotation>) => void;
   onDelete: (id: string) => void;
+  onDeleteMultiple?: (ids: string[]) => void; // Callback to delete multiple annotations
+  onRemoveFromSelection?: (id: string) => void; // Callback to remove from selection
   onDragStart?: () => void;
   onDragEnd?: () => void;
   onSettingsDialogOpenChange?: (isOpen: boolean) => void; // Callback for settings dialog state
   pageDimensions?: { width: number; height: number }; // Page dimensions for calculating max width/height
+  isSelected?: boolean; // Is this annotation selected
+  onSelect?: (ctrlKey: boolean, shiftKey: boolean) => void; // Callback when annotation is clicked
+  selectedAnnotationIds?: string[]; // All currently selected annotation IDs
 }
 
 const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
@@ -20,20 +26,25 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   scale,
   onUpdate,
   onDelete,
+  onDeleteMultiple,
+  onRemoveFromSelection,
   onDragStart,
   onDragEnd,
   onSettingsDialogOpenChange,
   pageDimensions,
+  isSelected = false,
+  onSelect,
+  selectedAnnotationIds = [],
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<'settings' | 'value'>('settings');
-  const [isSelected, setIsSelected] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [resizeDirection, setResizeDirection] = useState<'top' | 'right' | 'bottom' | 'left' | null>(null);
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
 
   // Clean border style calculation
@@ -45,10 +56,41 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   };
 
   const handleDelete = () => {
-    onDelete(annotation.id);
+    // Check if multiple annotations are selected
+    if (selectedAnnotationIds.length > 1) {
+      // Show confirmation dialog
+      setShowDeleteConfirmation(true);
+    } else {
+      // Single annotation or not selected - delete directly
+      onDelete(annotation.id);
+    }
   };
 
-  const handleSettingsClick = () => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent annotation selection
+    handleDelete();
+  };
+
+  const handleDeleteAll = () => {
+    if (onDeleteMultiple && selectedAnnotationIds.length > 0) {
+      onDeleteMultiple(selectedAnnotationIds);
+    }
+    setShowDeleteConfirmation(false);
+  };
+
+  const handleDeleteOne = () => {
+    onDelete(annotation.id);
+    // Remove this annotation from selection
+    onRemoveFromSelection?.(annotation.id);
+    setShowDeleteConfirmation(false);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmation(false);
+  };
+
+  const handleSettingsClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent annotation selection
     setSettingsInitialTab('settings');
     setShowSettings(true);
     onSettingsDialogOpenChange?.(true); // Notify that settings dialog is opening
@@ -67,7 +109,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent overlay from creating new annotation
-    setIsSelected(true); // Show resize handles when annotation is clicked
+    onSelect?.(e.ctrlKey, e.shiftKey); // Pass ctrl and shift key states to parent
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -82,22 +124,6 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
       e.preventDefault();
     }
   };
-
-  // Close resize handles when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (elementRef.current && !elementRef.current.contains(event.target as Node)) {
-        setIsSelected(false); // Hide resize handles when clicking outside
-      }
-    };
-
-    if (isSelected) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [isSelected]);
 
   React.useEffect(() => {
     const handleMouseMoveCallback = (e: MouseEvent) => {
@@ -263,6 +289,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     <>
       <div 
         ref={elementRef}
+        data-annotation-id={annotation.id}
         className={`simple-annotation ${getBackgroundClass()}`}
         style={{
           left: `${Math.max(0, annotation.x * scale)}px`,
@@ -298,7 +325,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
             justifyContent: 'center',
             zIndex: 1001,
           }}
-          onClick={handleDelete}
+          onClick={handleDeleteClick}
           title="Remove annotation"
         >
           ×
@@ -401,6 +428,14 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
         onSave={handleSettingsSave}
         pageDimensions={pageDimensions}
         initialTab={settingsInitialTab}
+      />
+      
+      <DeleteConfirmationDialog
+        isOpen={showDeleteConfirmation}
+        selectedCount={selectedAnnotationIds.length}
+        onClose={handleCancelDelete}
+        onDeleteAll={handleDeleteAll}
+        onDeleteOne={handleDeleteOne}
       />
     </>
   );

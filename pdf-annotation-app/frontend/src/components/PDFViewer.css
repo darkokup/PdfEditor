@@ -188,6 +188,13 @@
   cursor: copy;
 }
 
+.annotation-overlay.annotation-mode {
+  cursor: crosshair;
+  /* Add a subtle overlay tint to indicate annotation mode is active */
+  background-color: rgba(33, 150, 243, 0.02);
+  box-shadow: inset 0 0 0 2px rgba(33, 150, 243, 0.3);
+}
+
 .annotation-overlay.crosshair-mode {
   cursor: crosshair;
 }

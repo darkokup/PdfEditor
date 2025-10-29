@@ -250,10 +250,10 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           newY = Math.max(0, Math.min(newY, maxY));
           
           onUpdate(annotation.id, { 
-            x: newX, 
-            y: newY, 
-            width: newWidth, 
-            height: newHeight 
+            x: Math.round(newX), 
+            y: Math.round(newY), 
+            width: Math.round(newWidth), 
+            height: Math.round(newHeight) 
           });
         }
       }
@@ -278,7 +278,21 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   }, [isResizing, resizeDirection, resizeStart, annotation.id, initialPosition, scale, onUpdate, onDragEnd]);
 
   const getBackgroundClass = () => {
-    return annotation.transparent ? 'transparent' : 'opaque';
+    // Deprecated: kept for backward compatibility
+    const bgColor = annotation.backgroundColor || (annotation.transparent ? 'transparent' : 'white');
+    return bgColor === 'transparent' ? 'transparent' : 'opaque';
+  };
+
+  const getBackgroundStyle = () => {
+    const bgColor = annotation.backgroundColor || (annotation.transparent ? 'transparent' : 'white');
+    if (bgColor === 'transparent') {
+      return 'transparent';
+    } else if (bgColor === 'white') {
+      return 'rgba(255, 255, 255, 0.95)';
+    } else {
+      // Custom color
+      return bgColor;
+    }
   };
 
   const getTextClass = () => {
@@ -301,6 +315,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           minHeight: `${Math.max(18, 20 * scale)}px`,
           cursor: isDragging ? 'grabbing' : 'grab',
           border: getBorderStyle(),
+          backgroundColor: getBackgroundStyle(),
         } as React.CSSProperties}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
@@ -360,6 +375,11 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
         <span 
           className={`simple-annotation-text ${getTextClass()}`}
           onDoubleClick={handleEdit}
+          style={{
+            fontFamily: annotation.fontFamily || 'Arial',
+            color: annotation.fontColor || '#000000',
+            fontSize: `${annotation.fontSize || 12}px`,
+          }}
         >
           {annotation.value || 'Double-click to edit'}
         </span>

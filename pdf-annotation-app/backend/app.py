@@ -92,6 +92,33 @@ def parse_border_style(style_str):
     else:
         return []  # solid for anything else
 
+def get_background_fill(annotation):
+    """
+    Determine background fill settings for an annotation.
+    Returns tuple: (should_fill, fill_color)
+    """
+    # Check new backgroundColor property first
+    bg_color = annotation.get('backgroundColor')
+    
+    if bg_color is None:
+        # Fall back to old transparent property for backward compatibility
+        transparent = annotation.get('transparent', False)
+        if transparent:
+            return (False, None)
+        else:
+            return (True, HexColor('#FFFFFF'))  # White background
+    
+    # Handle new backgroundColor values
+    if bg_color == 'transparent':
+        return (False, None)
+    elif bg_color == 'white':
+        return (True, HexColor('#FFFFFF'))
+    else:
+        # Custom color - parse it
+        color = parse_color(bg_color)
+        return (True, color)
+
+
 class ProjectData:
     def __init__(self):
         self.project_id = str(uuid.uuid4())
@@ -312,6 +339,9 @@ def generate_pdf():
                         border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
                         border_width = float(annotation.get('borderWidth', 1))
                         
+                        # Get background fill settings
+                        should_fill_bg, fill_color = get_background_fill(annotation)
+                        
                         # Determine if border should be drawn
                         should_draw_border = border_style is not None
                         
@@ -324,11 +354,17 @@ def generate_pdf():
                             else:
                                 can.setDash([])  # solid line
                         
-                        # Draw text with border box (stroke=1 if border, stroke=0 if no border)
+                        # Set fill color if background should be filled
+                        if should_fill_bg and fill_color:
+                            can.setFillColor(fill_color)
+                        
+                        # Draw rectangle with border and/or fill
                         can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
-                                stroke=1 if should_draw_border else 0, fill=0)
+                                stroke=1 if should_draw_border else 0, 
+                                fill=1 if should_fill_bg else 0)
                         
                         # Draw text inside the box
+                        can.setFillColor("black")
                         text_x = pdf_x + 2  # small padding
                         text_y = pdf_y + (clipped_height / 2) - 3  # center vertically
                         can.drawString(text_x, text_y, value)
@@ -343,6 +379,9 @@ def generate_pdf():
                         border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
                         border_width = float(annotation.get('borderWidth', 1))
                         
+                        # Get background fill settings
+                        should_fill_bg, fill_color = get_background_fill(annotation)
+                        
                         # Determine if border should be drawn
                         should_draw_border = border_style is not None
                         
@@ -355,10 +394,16 @@ def generate_pdf():
                             else:
                                 can.setDash([])  # solid line
                         
-                        # Draw date with border box (stroke=1 if border, stroke=0 if no border)
-                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
-                                stroke=1 if should_draw_border else 0, fill=0)
+                        # Set fill color if background should be filled
+                        if should_fill_bg and fill_color:
+                            can.setFillColor(fill_color)
                         
+                        # Draw rectangle with border and/or fill
+                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
+                                stroke=1 if should_draw_border else 0, 
+                                fill=1 if should_fill_bg else 0)
+                        
+                        can.setFillColor("black")
                         text_x = pdf_x + 2
                         text_y = pdf_y + (clipped_height / 2) - 3
                         can.drawString(text_x, text_y, value)
@@ -373,6 +418,9 @@ def generate_pdf():
                         border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
                         border_width = float(annotation.get('borderWidth', 1))
                         
+                        # Get background fill settings
+                        should_fill_bg, fill_color = get_background_fill(annotation)
+                        
                         # Determine if border should be drawn
                         should_draw_border = border_style is not None
                         
@@ -385,10 +433,16 @@ def generate_pdf():
                             else:
                                 can.setDash([])  # solid line
                         
-                        # Draw signature with border box (stroke=1 if border, stroke=0 if no border)
-                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
-                                stroke=1 if should_draw_border else 0, fill=0)
+                        # Set fill color if background should be filled
+                        if should_fill_bg and fill_color:
+                            can.setFillColor(fill_color)
                         
+                        # Draw rectangle with border and/or fill
+                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
+                                stroke=1 if should_draw_border else 0, 
+                                fill=1 if should_fill_bg else 0)
+                        
+                        can.setFillColor("black")
                         text_x = pdf_x + 2
                         text_y = pdf_y + (clipped_height / 2) - 3
                         can.drawString(text_x, text_y, value)

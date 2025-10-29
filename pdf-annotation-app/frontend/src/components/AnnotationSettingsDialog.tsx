@@ -23,8 +23,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
   const [settings, setSettings] = useState({
     width: annotation.width,
     height: annotation.height,
-    multiline: annotation.multiline || false,
-    transparent: annotation.transparent || false,
+    multiline: true,  // Always true now since we allow multiline for all text-based annotations
+    backgroundColor: annotation.backgroundColor || (annotation.transparent ? 'transparent' : 'white'),
     borderStyle: annotation.borderStyle || 'solid',
     borderColor: annotation.borderColor || '#000000',
     borderWidth: annotation.borderWidth || 1,
@@ -33,6 +33,9 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
   const [annotationValue, setAnnotationValue] = useState({
     type: annotation.type,
     value: annotation.value,
+    fontFamily: annotation.fontFamily || 'Arial',
+    fontColor: annotation.fontColor || '#000000',
+    fontSize: annotation.fontSize || 12,
   });
 
   const [dragState, setDragState] = useState({
@@ -42,17 +45,51 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
   });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isBgColorDropdownOpen, setIsBgColorDropdownOpen] = useState(false);
+  const [customBgColor, setCustomBgColor] = useState('#FFFFFF');
 
   const dialogRef = useRef<HTMLDivElement>(null);
+  const borderDropdownRef = useRef<HTMLDivElement>(null);
+  const bgColorDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside or pressing ESC
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (borderDropdownRef.current && !borderDropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+      if (bgColorDropdownRef.current && !bgColorDropdownRef.current.contains(event.target as Node)) {
+        setIsBgColorDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+        setIsBgColorDropdownOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
+      const bgColor = annotation.backgroundColor || (annotation.transparent ? 'transparent' : 'white');
       setSettings({
         width: annotation.width,
         height: annotation.height,
-        multiline: annotation.multiline || false,
-        transparent: annotation.transparent || false,
+        multiline: true,  // Always true now since we allow multiline for all text-based annotations
+        backgroundColor: bgColor,
         borderStyle: annotation.borderStyle || 'solid',
         borderColor: annotation.borderColor || '#000000',
         borderWidth: annotation.borderWidth || 1,
@@ -60,7 +97,14 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
       setAnnotationValue({
         type: annotation.type,
         value: annotation.value,
+        fontFamily: annotation.fontFamily || 'Arial',
+        fontColor: annotation.fontColor || '#000000',
+        fontSize: annotation.fontSize || 12,
       });
+      // Initialize custom color if it's a custom color
+      if (bgColor !== 'transparent' && bgColor !== 'white') {
+        setCustomBgColor(bgColor);
+      }
     }
   }, [annotation, isOpen, initialTab]);
 
@@ -69,6 +113,9 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
       ...settings,
       type: annotationValue.type,
       value: annotationValue.value,
+      fontFamily: annotationValue.fontFamily,
+      fontColor: annotationValue.fontColor,
+      fontSize: annotationValue.fontSize,
     });
     onClose();
   };
@@ -105,6 +152,9 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
     setAnnotationValue({
       type: newType,
       value: newValue,
+      fontFamily: annotationValue.fontFamily,
+      fontColor: annotationValue.fontColor,
+      fontSize: annotationValue.fontSize,
     });
   };
 
@@ -277,33 +327,80 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                 />
               </div>
 
-              {annotationValue.type === 'text' && (
-                <div className="form-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={settings.multiline}
-                      onChange={(e) => handleInputChange('multiline', e.target.checked)}
-                    />
-                    Multiline
-                  </label>
-                </div>
-              )}
-
               <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.transparent}
-                    onChange={(e) => handleInputChange('transparent', e.target.checked)}
-                  />
-                  Transparent
-                </label>
+                <label>Background Color:</label>
+                <div className="custom-image-dropdown" ref={bgColorDropdownRef}>
+                  <div 
+                    className="dropdown-selected"
+                    onClick={() => setIsBgColorDropdownOpen(!isBgColorDropdownOpen)}
+                  >
+                    <div className="selected-option">
+                      {settings.backgroundColor === 'transparent' && <span>Transparent</span>}
+                      {settings.backgroundColor === 'white' && <span>White</span>}
+                      {settings.backgroundColor !== 'transparent' && settings.backgroundColor !== 'white' && (
+                        <span>
+                          Select Color 
+                          <span 
+                            style={{
+                              display: 'inline-block',
+                              width: '20px',
+                              height: '12px',
+                              backgroundColor: settings.backgroundColor,
+                              border: '1px solid #ccc',
+                              marginLeft: '8px',
+                              verticalAlign: 'middle'
+                            }}
+                          />
+                        </span>
+                      )}
+                    </div>
+                    <span className="dropdown-arrow">▼</span>
+                  </div>
+                  <div className={`dropdown-options ${isBgColorDropdownOpen ? 'open' : ''}`}>
+                    <div 
+                      className="dropdown-option"
+                      onClick={() => {
+                        handleInputChange('backgroundColor', 'transparent');
+                        setIsBgColorDropdownOpen(false);
+                      }}
+                    >
+                      <span>Transparent</span>
+                    </div>
+                    <div 
+                      className="dropdown-option"
+                      onClick={() => {
+                        handleInputChange('backgroundColor', 'white');
+                        setIsBgColorDropdownOpen(false);
+                      }}
+                    >
+                      <span>White</span>
+                    </div>
+                    <div 
+                      className="dropdown-option"
+                      onClick={() => {
+                        setIsBgColorDropdownOpen(false);
+                      }}
+                    >
+                      <span>Select Color</span>
+                      <input
+                        type="color"
+                        value={customBgColor}
+                        onChange={(e) => {
+                          setCustomBgColor(e.target.value);
+                          handleInputChange('backgroundColor', e.target.value);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        title="Select custom background color"
+                        style={{ marginLeft: '8px', cursor: 'pointer' }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="form-group">
                 <label>Border Line:</label>
-                <div className="custom-image-dropdown">
+                <div className="custom-image-dropdown" ref={borderDropdownRef}>
                   <div 
                     className="dropdown-selected"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -311,22 +408,22 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                     <div className="selected-option">
                       {settings.borderStyle === 'none' && (
                         <svg width="40" height="16" viewBox="0 0 40 16">
-                          <text x="20" y="12" textAnchor="middle" fontSize="10" fill="#666">None</text>
+                          <text x="20" y="12" textAnchor="middle" fontSize="13" fill="#000000ff">None</text>
                         </svg>
                       )}
                       {settings.borderStyle === 'solid' && (
                         <svg width="40" height="16" viewBox="0 0 40 16">
-                          <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1"/>
+                          <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1"/>
                         </svg>
                       )}
                       {settings.borderStyle === 'dashed' && (
                         <svg width="40" height="16" viewBox="0 0 40 16">
-                          <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="4,2"/>
+                          <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="4,2"/>
                         </svg>
                       )}
                       {settings.borderStyle === 'dotted' && (
                         <svg width="40" height="16" viewBox="0 0 40 16">
-                          <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="1,2"/>
+                          <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="1,2"/>
                         </svg>
                       )}
                     </div>
@@ -341,7 +438,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                       }}
                     >
                       <svg width="40" height="16" viewBox="0 0 40 16">
-                        <text x="20" y="12" textAnchor="middle" fontSize="10" fill="#666">None</text>
+                        <text x="20" y="12" textAnchor="middle" fontSize="13" fill="#000000ff">None</text>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -353,7 +450,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                       }}
                     >
                       <svg width="40" height="16" viewBox="0 0 40 16">
-                        <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1"/>
+                        <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1"/>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -365,7 +462,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                       }}
                     >
                       <svg width="40" height="16" viewBox="0 0 40 16">
-                        <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="4,2"/>
+                        <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="4,2"/>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -377,7 +474,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                       }}
                     >
                       <svg width="40" height="16" viewBox="0 0 40 16">
-                        <line x1="4" y1="8" x2="36" y2="8" stroke="#333" strokeWidth="1" strokeDasharray="1,2"/>
+                        <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="1,2"/>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -396,7 +493,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
               </div>
 
               <div className="form-group">
-                <label htmlFor="borderWidth">Line Width (1-10):</label>
+                <label htmlFor="borderWidth">Border Line Width (1-10):</label>
                 <input
                   type="number"
                   id="borderWidth"
@@ -423,6 +520,60 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                   <option value="text">Text</option>
                   <option value="date">Date</option>
                   <option value="signature">Signature</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fontFamily">Font Type:</label>
+                <select
+                  id="fontFamily"
+                  value={annotationValue.fontFamily}
+                  onChange={(e) => handleValueChange('fontFamily', e.target.value)}
+                  className="type-dropdown"
+                >
+                  <option value="Arial">Arial</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Courier New">Courier New</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Verdana">Verdana</option>
+                  <option value="Helvetica">Helvetica</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fontColor">Font Color:</label>
+                <input
+                  type="color"
+                  id="fontColor"
+                  value={annotationValue.fontColor}
+                  onChange={(e) => handleValueChange('fontColor', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fontSize">Font Size:</label>
+                <select
+                  id="fontSize"
+                  value={annotationValue.fontSize}
+                  onChange={(e) => handleValueChange('fontSize', parseInt(e.target.value, 10))}
+                  className="type-dropdown"
+                >
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                  <option value="14">14</option>
+                  <option value="16">16</option>
+                  <option value="18">18</option>
+                  <option value="20">20</option>
+                  <option value="22">22</option>
+                  <option value="24">24</option>
+                  <option value="28">28</option>
+                  <option value="32">32</option>
+                  <option value="36">36</option>
+                  <option value="48">48</option>
+                  <option value="72">72</option>
                 </select>
               </div>
 
@@ -454,8 +605,16 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                     id="annotationValue"
                     value={annotationValue.value}
                     onChange={(e) => handleValueChange('value', e.target.value)}
-                    className={`value-input ${annotationValue.type === 'text' && settings.multiline ? 'multiline' : 'singleline'}`}
-                    rows={annotationValue.type === 'text' && settings.multiline ? 3 : 1}
+                    className="value-input multiline"
+                    rows={3}
+                    style={{
+                      resize: 'vertical',
+                      overflow: 'auto',
+                      fontFamily: annotationValue.fontFamily,
+                      color: annotationValue.fontColor,
+                      fontSize: `${annotationValue.fontSize}px`,
+                      backgroundColor: settings.backgroundColor === 'transparent' ? 'white' : settings.backgroundColor,
+                    }}
                     placeholder={
                       annotationValue.type === 'signature' 
                         ? 'Enter signature text or use [Signature]'

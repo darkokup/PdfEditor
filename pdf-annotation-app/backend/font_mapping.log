@@ -97,3 +97,15 @@ Mapping font 'Creepster', bold=False, italic=False
 
 Mapping font 'Lobster', bold=False, italic=False
   Using registered font: 'Lobster-Regular.ttf'
+
+Mapping font 'Are You Serious', bold=False, italic=False
+  Using registered font: 'AreYouSerious-Regular.ttf'
+
+Mapping font 'Berkshire Swash', bold=False, italic=False
+  Using registered font: 'BerkshireSwash-Regular.ttf'
+
+Mapping font 'Creepster', bold=False, italic=False
+  Using registered font: 'Creepster-Regular.ttf'
+
+Mapping font 'Lobster', bold=False, italic=False
+  Using registered font: 'Lobster-Regular.ttf'

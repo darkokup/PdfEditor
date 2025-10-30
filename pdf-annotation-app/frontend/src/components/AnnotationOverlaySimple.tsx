@@ -9,6 +9,7 @@ interface AnnotationOverlayProps {
   onAnnotationUpdate: (annotationId: string, updates: Partial<Annotation>) => void;
   onAnnotationDelete: (annotationId: string) => void;
   onAnnotationDeleteMultiple?: (annotationIds: string[]) => void; // Delete multiple annotations
+  onAnnotationUpdateMultiple?: (updates: Array<{ id: string; changes: Partial<Annotation> }>) => void; // Update multiple annotations
   onRemoveFromSelection?: (id: string) => void; // Remove annotation from selection
   isSettingsDialogOpen?: boolean; // New prop to disable annotation adding
   onSettingsDialogOpenChange?: (isOpen: boolean) => void; // Callback for settings dialog state
@@ -26,6 +27,7 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   onAnnotationUpdate,
   onAnnotationDelete,
   onAnnotationDeleteMultiple,
+  onAnnotationUpdateMultiple,
   onRemoveFromSelection,
   isSettingsDialogOpen = false, // Default to false if not provided
   onSettingsDialogOpenChange,
@@ -169,6 +171,7 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
           onUpdate={(id, updates) => {
             onAnnotationUpdate(id, updates);
           }}
+          onUpdateMultiple={onAnnotationUpdateMultiple}
           onDelete={onAnnotationDelete}
           onDeleteMultiple={onAnnotationDeleteMultiple}
           onRemoveFromSelection={onRemoveFromSelection}
@@ -179,6 +182,7 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
           isSelected={selectedAnnotations.has(annotation.id)}
           onSelect={(ctrlKey, shiftKey) => onAnnotationSelect?.(annotation.id, ctrlKey, shiftKey)}
           selectedAnnotationIds={Array.from(selectedAnnotations)}
+          allAnnotations={annotations}
         />
       ))}
     </div>

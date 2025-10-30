@@ -9,6 +9,7 @@ interface SimpleAnnotationProps {
   annotation: Annotation;
   scale: number;
   onUpdate: (id: string, updates: Partial<Annotation>) => void;
+  onUpdateMultiple?: (updates: Array<{ id: string; changes: Partial<Annotation> }>) => void; // Callback to update multiple annotations
   onDelete: (id: string) => void;
   onDeleteMultiple?: (ids: string[]) => void; // Callback to delete multiple annotations
   onRemoveFromSelection?: (id: string) => void; // Callback to remove from selection
@@ -19,12 +20,14 @@ interface SimpleAnnotationProps {
   isSelected?: boolean; // Is this annotation selected
   onSelect?: (ctrlKey: boolean, shiftKey: boolean) => void; // Callback when annotation is clicked
   selectedAnnotationIds?: string[]; // All currently selected annotation IDs
+  allAnnotations?: Annotation[]; // All annotations for multi-drag
 }
 
 const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   annotation,
   scale,
   onUpdate,
+  onUpdateMultiple,
   onDelete,
   onDeleteMultiple,
   onRemoveFromSelection,
@@ -35,6 +38,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   isSelected = false,
   onSelect,
   selectedAnnotationIds = [],
+  allAnnotations = [],
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -42,7 +46,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   const [settingsInitialTab, setSettingsInitialTab] = useState<'settings' | 'value'>('settings');
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  const [resizeDirection, setResizeDirection] = useState<'top' | 'right' | 'bottom' | 'left' | null>(null);
+  const [resizeDirection, setResizeDirection] = useState<'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null>(null);
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
@@ -134,12 +138,49 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           let newX = (e.clientX - dragStart.x) / scale;
           let newY = (e.clientY - dragStart.y) / scale;
           
+          // Calculate delta for multi-drag
+          const deltaX = newX - annotation.x;
+          const deltaY = newY - annotation.y;
+          
           // Constrain to overlay bounds
           const maxX = Math.max(0, (rect.width / scale) - annotation.width);
           const maxY = Math.max(0, (rect.height / scale) - annotation.height);
           newX = Math.max(0, Math.min(newX, maxX));
           newY = Math.max(0, Math.min(newY, maxY));
           
+          // If multiple annotations are selected and onUpdateMultiple is available
+          if (isSelected && selectedAnnotationIds.length > 1 && onUpdateMultiple && allAnnotations.length > 0) {
+            // Get all selected annotations on the same page
+            const selectedOnSamePage = allAnnotations.filter(
+              ann => selectedAnnotationIds.includes(ann.id) && ann.page === annotation.page
+            );
+            
+            if (selectedOnSamePage.length > 1) {
+              // Check if ANY annotation would go out of bounds with this delta
+              const wouldExceedBounds = selectedOnSamePage.some(ann => {
+                const updatedX = ann.x + deltaX;
+                const updatedY = ann.y + deltaY;
+                const annMaxX = (rect.width / scale) - ann.width;
+                const annMaxY = (rect.height / scale) - ann.height;
+                
+                // Check if out of bounds
+                return updatedX < 0 || updatedY < 0 || updatedX > annMaxX || updatedY > annMaxY;
+              });
+              
+              // Only update if all annotations stay within bounds
+              if (!wouldExceedBounds) {
+                const updates = selectedOnSamePage.map(ann => ({
+                  id: ann.id,
+                  changes: { x: ann.x + deltaX, y: ann.y + deltaY }
+                }));
+                
+                onUpdateMultiple(updates);
+              }
+              return;
+            }
+          }
+          
+          // Single annotation update
           onUpdate(annotation.id, { x: newX, y: newY });
         }
       }
@@ -160,10 +201,10 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
         document.removeEventListener('mouseup', handleMouseUpCallback);
       };
     }
-  }, [isDragging, dragStart, annotation.id, annotation.width, annotation.height, scale, onUpdate, onDragEnd]);
+  }, [isDragging, dragStart, annotation.id, annotation.width, annotation.height, annotation.x, annotation.y, annotation.page, scale, onUpdate, onUpdateMultiple, onDragEnd, isSelected, selectedAnnotationIds, allAnnotations]);
 
   // Resize handle mouse down handler
-  const handleResizeMouseDown = (e: React.MouseEvent, direction: 'top' | 'right' | 'bottom' | 'left') => {
+  const handleResizeMouseDown = (e: React.MouseEvent, direction: 'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => {
     e.stopPropagation();
     setIsResizing(true);
     setResizeDirection(direction);
@@ -240,6 +281,86 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
                 newX = 0;
                 newWidth = Math.max(60, initialPosition.x + resizeStart.width);
               }
+              break;
+              
+            case 'top-left':
+              // Resize both width and height from top-left corner
+              const proposedTLHeight = resizeStart.height - deltaY;
+              const proposedTLY = initialPosition.y + deltaY;
+              const proposedTLWidth = resizeStart.width - deltaX;
+              const proposedTLX = initialPosition.x + deltaX;
+              
+              // Handle Y (height)
+              if (proposedTLY >= 0) {
+                newHeight = Math.max(20, proposedTLHeight);
+                newY = initialPosition.y + (resizeStart.height - newHeight);
+              } else {
+                newY = 0;
+                newHeight = Math.max(20, initialPosition.y + resizeStart.height);
+              }
+              
+              // Handle X (width)
+              if (proposedTLX >= 0) {
+                newWidth = Math.max(60, proposedTLWidth);
+                newX = initialPosition.x + (resizeStart.width - newWidth);
+              } else {
+                newX = 0;
+                newWidth = Math.max(60, initialPosition.x + resizeStart.width);
+              }
+              break;
+              
+            case 'top-right':
+              // Resize both width and height from top-right corner
+              const proposedTRHeight = resizeStart.height - deltaY;
+              const proposedTRY = initialPosition.y + deltaY;
+              const proposedTRWidth = resizeStart.width + deltaX;
+              const maxTRWidth = pageWidth - initialPosition.x;
+              
+              // Handle Y (height)
+              if (proposedTRY >= 0) {
+                newHeight = Math.max(20, proposedTRHeight);
+                newY = initialPosition.y + (resizeStart.height - newHeight);
+              } else {
+                newY = 0;
+                newHeight = Math.max(20, initialPosition.y + resizeStart.height);
+              }
+              
+              // Handle X (width)
+              newWidth = Math.max(60, Math.min(proposedTRWidth, maxTRWidth));
+              break;
+              
+            case 'bottom-left':
+              // Resize both width and height from bottom-left corner
+              const proposedBLHeight = resizeStart.height + deltaY;
+              const maxBLHeight = pageHeight - initialPosition.y;
+              const proposedBLWidth = resizeStart.width - deltaX;
+              const proposedBLX = initialPosition.x + deltaX;
+              
+              // Handle Y (height)
+              newHeight = Math.max(20, Math.min(proposedBLHeight, maxBLHeight));
+              
+              // Handle X (width)
+              if (proposedBLX >= 0) {
+                newWidth = Math.max(60, proposedBLWidth);
+                newX = initialPosition.x + (resizeStart.width - newWidth);
+              } else {
+                newX = 0;
+                newWidth = Math.max(60, initialPosition.x + resizeStart.width);
+              }
+              break;
+              
+            case 'bottom-right':
+              // Resize both width and height from bottom-right corner
+              const proposedBRHeight = resizeStart.height + deltaY;
+              const maxBRHeight = pageHeight - initialPosition.y;
+              const proposedBRWidth = resizeStart.width + deltaX;
+              const maxBRWidth = pageWidth - initialPosition.x;
+              
+              // Handle Y (height)
+              newHeight = Math.max(20, Math.min(proposedBRHeight, maxBRHeight));
+              
+              // Handle X (width)
+              newWidth = Math.max(60, Math.min(proposedBRWidth, maxBRWidth));
               break;
           }
           
@@ -320,57 +441,61 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
         onMouseDown={handleMouseDown}
         onClick={handleClick}
       >
-        {/* Remove button - positioned at top right, aligned with top edge */}
-        <button 
-          className="simple-remove-btn"
-          style={{
-            position: 'absolute',
-            top: `${-10 * scale}px`, // Align center with top edge
-            right: `${-20 * scale}px`, // Move further right to avoid resize handle
-            width: `${Math.max(16, 18 * scale)}px`, // Made bigger
-            height: `${Math.max(16, 18 * scale)}px`, // Made bigger
-            fontSize: `${Math.max(10, 12 * scale)}px`,
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1001,
-          }}
-          onClick={handleDeleteClick}
-          title="Remove annotation"
-        >
-          ×
-        </button>
+        {/* Remove button - positioned at top right, only visible when selected */}
+        {isSelected && (
+          <button 
+            className="simple-remove-btn"
+            style={{
+              position: 'absolute',
+              top: `${-10 * scale}px`, // Align center with top edge
+              right: `${-23 * scale}px`, // Moved further right to avoid corner handle
+              width: `${Math.max(16, 18 * scale)}px`, // Made bigger
+              height: `${Math.max(16, 18 * scale)}px`, // Made bigger
+              fontSize: `${Math.max(10, 12 * scale)}px`,
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1001,
+            }}
+            onClick={handleDeleteClick}
+            title="Remove annotation"
+          >
+            ×
+          </button>
+        )}
         
-        {/* Settings button - positioned at bottom right, aligned with bottom edge */}
-        <button 
-          className="simple-settings-btn"
-          style={{
-            position: 'absolute',
-            bottom: `${-10 * scale}px`, // Align center with bottom edge
-            right: `${-20 * scale}px`, // Move further right to avoid resize handle
-            width: `${Math.max(16, 18 * scale)}px`, // Made bigger
-            height: `${Math.max(16, 18 * scale)}px`, // Made bigger
-            fontSize: `${Math.max(8, 10 * scale)}px`,
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1001,
-          }}
-          onClick={handleSettingsClick}
-          title="Annotation settings"
-        >
-          ⋮
-        </button>
+        {/* Settings button - positioned at bottom right, only visible when selected */}
+        {isSelected && (
+          <button 
+            className="simple-settings-btn"
+            style={{
+              position: 'absolute',
+              bottom: `${-10 * scale}px`, // Align center with bottom edge
+              right: `${-23 * scale}px`, // Moved further right to avoid corner handle
+              width: `${Math.max(16, 18 * scale)}px`, // Made bigger
+              height: `${Math.max(16, 18 * scale)}px`, // Made bigger
+              fontSize: `${Math.max(8, 10 * scale)}px`,
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1001,
+            }}
+            onClick={handleSettingsClick}
+            title="Annotation settings"
+          >
+            ⋮
+          </button>
+        )}
         
         <span 
           className={`simple-annotation-text ${getTextClass()}`}
@@ -406,7 +531,8 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
             <div
               className="resize-handle resize-handle-right"
               style={{
-                top: `${(annotation.height * scale) / 2 - 4 * scale}px`,
+                top: '50%',
+                transform: 'translateY(-50%)',
                 right: `${-4 * scale}px`,
                 width: `${8 * scale}px`,
                 height: `${8 * scale}px`,
@@ -430,12 +556,65 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
             <div
               className="resize-handle resize-handle-left"
               style={{
-                top: `${(annotation.height * scale) / 2 - 4 * scale}px`,
+                top: '50%',
+                transform: 'translateY(-50%)',
                 left: `${-4 * scale}px`,
                 width: `${8 * scale}px`,
                 height: `${8 * scale}px`,
               }}
               onMouseDown={(e) => handleResizeMouseDown(e, 'left')}
+            />
+            
+            {/* Top-Left corner handle */}
+            <div
+              className="resize-handle resize-handle-corner resize-handle-top-left"
+              style={{
+                top: `${-4 * scale}px`,
+                left: `${-4 * scale}px`,
+                width: `${8 * scale}px`,
+                height: `${8 * scale}px`,
+                cursor: 'nwse-resize',
+              }}
+              onMouseDown={(e) => handleResizeMouseDown(e, 'top-left')}
+            />
+            
+            {/* Top-Right corner handle */}
+            <div
+              className="resize-handle resize-handle-corner resize-handle-top-right"
+              style={{
+                top: `${-4 * scale}px`,
+                right: `${-4 * scale}px`,
+                width: `${8 * scale}px`,
+                height: `${8 * scale}px`,
+                cursor: 'nesw-resize',
+              }}
+              onMouseDown={(e) => handleResizeMouseDown(e, 'top-right')}
+            />
+            
+            {/* Bottom-Left corner handle */}
+            <div
+              className="resize-handle resize-handle-corner resize-handle-bottom-left"
+              style={{
+                bottom: `${-4 * scale}px`,
+                left: `${-4 * scale}px`,
+                width: `${8 * scale}px`,
+                height: `${8 * scale}px`,
+                cursor: 'nesw-resize',
+              }}
+              onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-left')}
+            />
+            
+            {/* Bottom-Right corner handle */}
+            <div
+              className="resize-handle resize-handle-corner resize-handle-bottom-right"
+              style={{
+                bottom: `${-4 * scale}px`,
+                right: `${-4 * scale}px`,
+                width: `${8 * scale}px`,
+                height: `${8 * scale}px`,
+                cursor: 'nwse-resize',
+              }}
+              onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-right')}
             />
           </>
         )}

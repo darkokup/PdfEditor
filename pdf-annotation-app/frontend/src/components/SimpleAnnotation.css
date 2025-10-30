@@ -131,8 +131,28 @@
   cursor: ew-resize;
 }
 
+/* Corner resize handles */
+.resize-handle-corner {
+  border-radius: 50%; /* Make corners circular for distinction */
+  background-color: #0056b3; /* Slightly darker blue */
+}
+
+.resize-handle-top-left,
+.resize-handle-bottom-right {
+  cursor: nwse-resize;
+}
+
+.resize-handle-top-right,
+.resize-handle-bottom-left {
+  cursor: nesw-resize;
+}
+
 .resize-handle:hover {
   background-color: #0056b3;
+}
+
+.resize-handle-corner:hover {
+  background-color: #003d82; /* Even darker on hover */
 }
 
 /* Dynamic positioning and sizing will still need inline styles */

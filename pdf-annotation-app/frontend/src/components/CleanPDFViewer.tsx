@@ -297,6 +297,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     }
   }, [onAnnotationUpdate]);
 
+  const handleAnnotationUpdateMultiple = useCallback((updates: Array<{ id: string; changes: Partial<Annotation> }>) => {
+    // Apply all updates
+    updates.forEach(({ id, changes }) => {
+      onAnnotationUpdate(id, changes);
+    });
+  }, [onAnnotationUpdate]);
+
   const goToPrevious = () => {
     if (continuousScroll) {
       // Smooth scroll to previous page
@@ -740,6 +747,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                       scale={scale}
                       onDrop={createPageDropHandler(index)}
                       onAnnotationUpdate={handleAnnotationUpdate}
+                      onAnnotationUpdateMultiple={handleAnnotationUpdateMultiple}
                       onAnnotationDelete={onAnnotationDelete}
                       onAnnotationDeleteMultiple={handleAnnotationDeleteMultiple}
                       isSettingsDialogOpen={isSettingsDialogOpen}
@@ -785,6 +793,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                 scale={scale}
                 onDrop={(x, y) => handlePageDrop(x, y, currentPage - 1)}
                 onAnnotationUpdate={handleAnnotationUpdate}
+                onAnnotationUpdateMultiple={handleAnnotationUpdateMultiple}
                 onAnnotationDelete={onAnnotationDelete}
                 onAnnotationDeleteMultiple={handleAnnotationDeleteMultiple}
                 isSettingsDialogOpen={isSettingsDialogOpen}

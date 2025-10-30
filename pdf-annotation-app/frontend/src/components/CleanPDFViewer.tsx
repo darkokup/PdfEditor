@@ -40,6 +40,21 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [showInsertPageDialog, setShowInsertPageDialog] = useState<boolean>(false); // Dialog for page insertion
   const [selectedAnnotations, setSelectedAnnotations] = useState<Set<string>>(new Set()); // Track selected annotation IDs
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false); // Dialog for delete confirmation
+  
+  // Track last annotation style for new annotations
+  const [lastAnnotationStyle, setLastAnnotationStyle] = useState<Partial<Annotation>>({
+    borderStyle: 'none',
+    backgroundColor: 'white',
+    fontFamily: 'Arial',
+    fontSize: 12,
+    fontColor: '#000000',
+    fontBold: false,
+    fontItalic: false,
+    fontStrikethrough: false,
+    borderColor: '#000000',
+    borderWidth: 1,
+    multiline: false,
+  });
 
   // Configure PDF.js worker with multiple fallback methods
   useEffect(() => {
@@ -238,10 +253,21 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       height: 30,
       page: targetPage, // Use calculated target page
       value: 'Annotation',
-      borderStyle: 'none', // Default to "No Line" for new annotations
+      // Use last annotation's style settings
+      borderStyle: lastAnnotationStyle.borderStyle || 'none',
+      backgroundColor: lastAnnotationStyle.backgroundColor || 'white',
+      fontFamily: lastAnnotationStyle.fontFamily || 'Arial',
+      fontSize: lastAnnotationStyle.fontSize || 12,
+      fontColor: lastAnnotationStyle.fontColor || '#000000',
+      fontBold: lastAnnotationStyle.fontBold || false,
+      fontItalic: lastAnnotationStyle.fontItalic || false,
+      fontStrikethrough: lastAnnotationStyle.fontStrikethrough || false,
+      borderColor: lastAnnotationStyle.borderColor || '#000000',
+      borderWidth: lastAnnotationStyle.borderWidth || 1,
+      multiline: lastAnnotationStyle.multiline || false,
     };
     onAnnotationAdd(newAnnotation);
-  }, [currentPage, onAnnotationAdd, annotationMode]);
+  }, [currentPage, onAnnotationAdd, annotationMode, lastAnnotationStyle]);
 
   // Create a page-specific drop handler for continuous mode
   const createPageDropHandler = useCallback((pageIndex: number) => {
@@ -250,6 +276,25 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const handleAnnotationUpdate = useCallback((annotationId: string, updates: Partial<Annotation>) => {
     onAnnotationUpdate(annotationId, updates);
+    
+    // Update last annotation style with any style-related changes
+    const styleUpdates: Partial<Annotation> = {};
+    if (updates.borderStyle !== undefined) styleUpdates.borderStyle = updates.borderStyle;
+    if (updates.backgroundColor !== undefined) styleUpdates.backgroundColor = updates.backgroundColor;
+    if (updates.fontFamily !== undefined) styleUpdates.fontFamily = updates.fontFamily;
+    if (updates.fontSize !== undefined) styleUpdates.fontSize = updates.fontSize;
+    if (updates.fontColor !== undefined) styleUpdates.fontColor = updates.fontColor;
+    if (updates.fontBold !== undefined) styleUpdates.fontBold = updates.fontBold;
+    if (updates.fontItalic !== undefined) styleUpdates.fontItalic = updates.fontItalic;
+    if (updates.fontStrikethrough !== undefined) styleUpdates.fontStrikethrough = updates.fontStrikethrough;
+    if (updates.borderColor !== undefined) styleUpdates.borderColor = updates.borderColor;
+    if (updates.borderWidth !== undefined) styleUpdates.borderWidth = updates.borderWidth;
+    if (updates.multiline !== undefined) styleUpdates.multiline = updates.multiline;
+    
+    // If any style updates were made, update the last annotation style
+    if (Object.keys(styleUpdates).length > 0) {
+      setLastAnnotationStyle(prev => ({ ...prev, ...styleUpdates }));
+    }
   }, [onAnnotationUpdate]);
 
   const goToPrevious = () => {

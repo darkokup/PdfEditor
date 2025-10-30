@@ -9,13 +9,88 @@ from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.colors import HexColor, toColor
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import uuid
 from datetime import datetime
+import sys
+
+# Force stdout to flush immediately
+sys.stdout.reconfigure(line_buffering=True)
 
 app = Flask(__name__)
 CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'], 
      allow_headers=['Content-Type'], 
      methods=['GET', 'POST', 'OPTIONS'])
+
+# Register TrueType fonts if available on Windows
+def register_system_fonts():
+    """Register common Windows system fonts with reportlab"""
+    windows_fonts_dir = "C:/Windows/Fonts/"
+    
+    font_files = {
+        'Comic-Sans-MS': 'comic.ttf',
+        'Comic-Sans-MS-Bold': 'comicbd.ttf',
+        'Comic-Sans-MS-Italic': 'comici.ttf',
+        'Comic-Sans-MS-BoldItalic': 'comicz.ttf',
+        'Georgia': 'georgia.ttf',
+        'Georgia-Bold': 'georgiab.ttf',
+        'Georgia-Italic': 'georgiai.ttf',
+        'Georgia-BoldItalic': 'georgiaz.ttf',
+        'Verdana': 'verdana.ttf',
+        'Verdana-Bold': 'verdanab.ttf',
+        'Verdana-Italic': 'verdanai.ttf',
+        'Verdana-BoldItalic': 'verdanaz.ttf',
+        'Tahoma': 'tahoma.ttf',
+        'Tahoma-Bold': 'tahomabd.ttf',
+        'Palatino': 'pala.ttf',
+        'Palatino-Bold': 'palab.ttf',
+        'Palatino-Italic': 'palai.ttf',
+        'Palatino-BoldItalic': 'palabi.ttf',
+        'Garamond': 'gara.ttf',
+        'Garamond-Bold': 'garabd.ttf',
+        'Garamond-Italic': 'garait.ttf',
+        'Calibri': 'calibri.ttf',
+        'Calibri-Bold': 'calibrib.ttf',
+        'Calibri-Italic': 'calibrii.ttf',
+        'Calibri-BoldItalic': 'calibriz.ttf',
+        'Cambria': 'cambria.ttc',
+        'Cambria-Bold': 'cambriab.ttf',
+        'Cambria-Italic': 'cambriai.ttf',
+        'Cambria-BoldItalic': 'cambriaz.ttf',
+        'Consolas': 'consola.ttf',
+        'Consolas-Bold': 'consolab.ttf',
+        'Consolas-Italic': 'consolai.ttf',
+        'Consolas-BoldItalic': 'consolaz.ttf',
+        'Impact': 'impact.ttf',
+        'Trebuchet-MS': 'trebuc.ttf',
+        'Trebuchet-MS-Bold': 'trebucbd.ttf',
+        'Trebuchet-MS-Italic': 'trebucit.ttf',
+        'Trebuchet-MS-BoldItalic': 'trebucbi.ttf',
+        'Arial-Black': 'ariblk.ttf',
+    }
+    
+    registered_fonts = []
+    for font_name, font_file in font_files.items():
+        font_path = os.path.join(windows_fonts_dir, font_file)
+        if os.path.exists(font_path):
+            try:
+                pdfmetrics.registerFont(TTFont(font_name, font_path))
+                registered_fonts.append(font_name)
+            except Exception as e:
+                print(f"Failed to register font {font_name}: {e}")
+    
+    if registered_fonts:
+        print(f"Successfully registered {len(registered_fonts)} system fonts")
+        with open('font_mapping.log', 'a', encoding='utf-8') as f:
+            f.write(f"\n=== Registered {len(registered_fonts)} system fonts ===\n")
+            for font in registered_fonts:
+                f.write(f"  {font}\n")
+    
+    return registered_fonts
+
+# Register fonts on startup
+REGISTERED_FONTS = register_system_fonts()
 
 # Configure upload folder
 UPLOAD_FOLDER = '../projects'
@@ -91,6 +166,184 @@ def parse_border_style(style_str):
         return [1, 2]  # 1 point on, 2 points off
     else:
         return []  # solid for anything else
+
+def map_font_family(font_family, font_bold=False, font_italic=False):
+    """
+    Map CSS font family and style to reportlab font name.
+    Returns font name that reportlab can use.
+    Now supports TrueType fonts if registered, otherwise falls back to built-in fonts:
+    - Helvetica (normal, bold, oblique, bold-oblique)
+    - Times-Roman (normal, bold, italic, bold-italic)
+    - Courier (normal, bold, oblique, bold-oblique)
+    
+    font_bold: boolean indicating if text should be bold
+    font_italic: boolean indicating if text should be italic
+    Note: strikethrough is handled separately via text decoration, not font
+    """
+    if not font_family:
+        font_family = 'Arial'
+    
+    # Write to log file for debugging
+    try:
+        with open('font_mapping.log', 'a', encoding='utf-8') as f:
+            f.write(f"Mapping font '{font_family}', bold={font_bold}, italic={font_italic}\n")
+    except:
+        pass
+    
+    # Try to use registered TrueType fonts first
+    ttf_font_map = {
+        'Comic Sans MS': 'Comic-Sans-MS',
+        'Georgia': 'Georgia',
+        'Verdana': 'Verdana',
+        'Tahoma': 'Tahoma',
+        'Palatino': 'Palatino',
+        'Garamond': 'Garamond',
+        'Calibri': 'Calibri',
+        'Cambria': 'Cambria',
+        'Consolas': 'Consolas',
+        'Impact': 'Impact',
+        'Trebuchet MS': 'Trebuchet-MS',
+        'Arial Black': 'Arial-Black',
+    }
+    
+    # Check if we have a TTF version of this font
+    if font_family in ttf_font_map:
+        base_ttf_name = ttf_font_map[font_family]
+        
+        # Build the font name with style
+        if font_bold and font_italic:
+            ttf_name = f'{base_ttf_name}-BoldItalic'
+        elif font_bold:
+            ttf_name = f'{base_ttf_name}-Bold'
+        elif font_italic:
+            ttf_name = f'{base_ttf_name}-Italic'
+        else:
+            ttf_name = base_ttf_name
+        
+        # Check if this font variant is registered
+        if ttf_name in REGISTERED_FONTS:
+            try:
+                with open('font_mapping.log', 'a', encoding='utf-8') as f:
+                    f.write(f"  Using TTF font: '{ttf_name}'\n")
+            except:
+                pass
+            return ttf_name
+        # If specific variant not available, try base font
+        elif base_ttf_name in REGISTERED_FONTS and not font_bold and not font_italic:
+            try:
+                with open('font_mapping.log', 'a', encoding='utf-8') as f:
+                    f.write(f"  Using TTF font: '{base_ttf_name}'\n")
+            except:
+                pass
+            return base_ttf_name
+    
+    # Fall back to built-in reportlab fonts
+    # Map common web fonts to reportlab font families
+    font_family_map = {
+        # Sans-serif fonts -> Helvetica
+        'Arial': 'Helvetica',
+        'Helvetica': 'Helvetica',
+        'Verdana': 'Helvetica',
+        'Tahoma': 'Helvetica',
+        'Geneva': 'Helvetica',
+        'Calibri': 'Helvetica',
+        'Candara': 'Helvetica',
+        'Trebuchet MS': 'Helvetica',
+        'Century Gothic': 'Helvetica',
+        'Franklin Gothic Medium': 'Helvetica',
+        'Comic Sans MS': 'Helvetica',
+        
+        # Serif fonts -> Times-Roman
+        'Times New Roman': 'Times-Roman',
+        'Georgia': 'Times-Roman',
+        'Garamond': 'Times-Roman',
+        'Palatino': 'Times-Roman',
+        'Book Antiqua': 'Times-Roman',
+        'Cambria': 'Times-Roman',
+        
+        # Monospace fonts -> Courier
+        'Courier New': 'Courier',
+        'Consolas': 'Courier',
+        'Monaco': 'Courier',
+        
+        # Bold fonts -> Helvetica (will be made bold below)
+        'Arial Black': 'Helvetica',
+        'Impact': 'Helvetica',
+        
+        # Signature/Script fonts -> Helvetica (will be made oblique for handwriting effect)
+        'Brush Script MT': 'Helvetica',
+        'Lucida Handwriting': 'Helvetica',
+        'Segoe Script': 'Helvetica',
+        'Monotype Corsiva': 'Helvetica',
+        
+        # Decorative fonts
+        'Papyrus': 'Times-Roman',
+        'Copperplate': 'Times-Roman',
+    }
+    
+    # Get base font family
+    base_font = font_family_map.get(font_family, 'Helvetica')
+    
+    try:
+        with open('font_mapping.log', 'a', encoding='utf-8') as f:
+            f.write(f"  Fallback to built-in font, base: '{base_font}'\n")
+    except:
+        pass
+    
+    # Special handling for signature fonts - always use oblique/italic
+    signature_fonts = ['Brush Script MT', 'Lucida Handwriting', 'Segoe Script', 'Monotype Corsiva']
+    if font_family in signature_fonts:
+        try:
+            with open('font_mapping.log', 'a', encoding='utf-8') as f:
+                f.write(f"  '{font_family}' is a signature font, forcing italic=True\n")
+        except:
+            pass
+        font_italic = True
+    
+    # Special handling for Impact and Arial Black - always bold
+    if font_family in ['Impact', 'Arial Black']:
+        try:
+            with open('font_mapping.log', 'a', encoding='utf-8') as f:
+                f.write(f"  '{font_family}' is a bold font, forcing bold=True\n")
+        except:
+            pass
+        font_bold = True
+    
+    # Apply font style based on bold and italic flags
+    result_font = base_font  # Default
+    
+    if font_bold and font_italic:
+        # Both bold and italic
+        if base_font == 'Helvetica':
+            result_font = 'Helvetica-BoldOblique'
+        elif base_font == 'Times-Roman':
+            result_font = 'Times-BoldItalic'
+        elif base_font == 'Courier':
+            result_font = 'Courier-BoldOblique'
+    elif font_bold:
+        # Only bold
+        if base_font == 'Helvetica':
+            result_font = 'Helvetica-Bold'
+        elif base_font == 'Times-Roman':
+            result_font = 'Times-Bold'
+        elif base_font == 'Courier':
+            result_font = 'Courier-Bold'
+    elif font_italic:
+        # Only italic
+        if base_font == 'Helvetica':
+            result_font = 'Helvetica-Oblique'
+        elif base_font == 'Times-Roman':
+            result_font = 'Times-Italic'
+        elif base_font == 'Courier':
+            result_font = 'Courier-Oblique'
+    
+    try:
+        with open('font_mapping.log', 'a', encoding='utf-8') as f:
+            f.write(f"  Final reportlab font: '{result_font}'\n")
+    except:
+        pass
+    
+    return result_font
 
 def get_background_fill(annotation):
     """
@@ -330,9 +583,24 @@ def generate_pdf():
                     print(f"  Final annotation: '{value}' at web({clipped_x},{clipped_y}) -> pdf({pdf_x},{pdf_y}) size({clipped_width},{clipped_height})")
                     
                     if annotation.get('type') == 'text':
-                        # Set font and size
-                        can.setFont("Helvetica", 12)
-                        can.setFillColor("black")
+                        # Get font properties from annotation
+                        font_family = annotation.get('fontFamily', 'Arial')
+                        font_bold = annotation.get('fontBold', False)
+                        font_italic = annotation.get('fontItalic', False)
+                        font_strikethrough = annotation.get('fontStrikethrough', False)
+                        font_size = float(annotation.get('fontSize', 12))
+                        font_color = parse_color(annotation.get('fontColor', '#000000'))
+                        
+                        # Map font family and style to reportlab font
+                        reportlab_font = map_font_family(font_family, font_bold, font_italic)
+                        
+                        # Set font and size with error handling
+                        try:
+                            can.setFont(reportlab_font, font_size)
+                        except Exception as e:
+                            print(f"Warning: Failed to set font '{reportlab_font}' for text annotation, falling back to Helvetica. Error: {e}")
+                            can.setFont('Helvetica', font_size)
+                            reportlab_font = 'Helvetica'
                         
                         # Get border properties from annotation
                         border_color = parse_color(annotation.get('borderColor', 'black'))
@@ -363,16 +631,52 @@ def generate_pdf():
                                 stroke=1 if should_draw_border else 0, 
                                 fill=1 if should_fill_bg else 0)
                         
-                        # Draw text inside the box
-                        can.setFillColor("black")
+                        # Draw text inside the box with font color (handle multiline)
+                        can.setFillColor(font_color)
                         text_x = pdf_x + 2  # small padding
-                        text_y = pdf_y + (clipped_height / 2) - 3  # center vertically
-                        can.drawString(text_x, text_y, value)
+                        
+                        # Split text by newlines and draw each line
+                        lines = value.split('\n')
+                        line_height = font_size * 1.2  # Line spacing
+                        
+                        # Calculate starting Y position (top of text block)
+                        total_text_height = len(lines) * line_height
+                        # Start from top and work down
+                        start_y = pdf_y + clipped_height - line_height + (font_size / 3)
+                        
+                        for i, line in enumerate(lines):
+                            line_y = start_y - (i * line_height)
+                            can.drawString(text_x, line_y, line)
+                            
+                            # Draw strikethrough for this line if needed
+                            if font_strikethrough:
+                                text_width = can.stringWidth(line, reportlab_font, font_size)
+                                strike_y = line_y + (font_size / 3)  # Position line through middle of text
+                                can.setStrokeColor(font_color)
+                                can.setLineWidth(1)  # Always use 1px line for strikethrough
+                                can.setDash([])  # Reset to solid line (no dash pattern)
+                                can.line(text_x, strike_y, text_x + text_width, strike_y)
+                                can.setFillColor(font_color)  # Reset fill color for next line
                         
                     elif annotation.get('type') == 'date':
-                        # Similar handling for date fields
-                        can.setFont("Helvetica", 12)
-                        can.setFillColor("black")
+                        # Get font properties from annotation
+                        font_family = annotation.get('fontFamily', 'Arial')
+                        font_bold = annotation.get('fontBold', False)
+                        font_italic = annotation.get('fontItalic', False)
+                        font_strikethrough = annotation.get('fontStrikethrough', False)
+                        font_size = float(annotation.get('fontSize', 12))
+                        font_color = parse_color(annotation.get('fontColor', '#000000'))
+                        
+                        # Map font family and style to reportlab font
+                        reportlab_font = map_font_family(font_family, font_bold, font_italic)
+                        
+                        # Set font and size with error handling
+                        try:
+                            can.setFont(reportlab_font, font_size)
+                        except Exception as e:
+                            print(f"Warning: Failed to set font '{reportlab_font}' for date annotation, falling back to Helvetica. Error: {e}")
+                            can.setFont('Helvetica', font_size)
+                            reportlab_font = 'Helvetica'
                         
                         # Get border properties from annotation
                         border_color = parse_color(annotation.get('borderColor', 'black'))
@@ -403,15 +707,52 @@ def generate_pdf():
                                 stroke=1 if should_draw_border else 0, 
                                 fill=1 if should_fill_bg else 0)
                         
-                        can.setFillColor("black")
+                        # Draw text with font color (handle multiline)
+                        can.setFillColor(font_color)
                         text_x = pdf_x + 2
-                        text_y = pdf_y + (clipped_height / 2) - 3
-                        can.drawString(text_x, text_y, value)
+                        
+                        # Split text by newlines and draw each line
+                        lines = value.split('\n')
+                        line_height = font_size * 1.2  # Line spacing
+                        
+                        # Calculate starting Y position (top of text block)
+                        total_text_height = len(lines) * line_height
+                        # Start from top and work down
+                        start_y = pdf_y + clipped_height - line_height + (font_size / 3)
+                        
+                        for i, line in enumerate(lines):
+                            line_y = start_y - (i * line_height)
+                            can.drawString(text_x, line_y, line)
+                            
+                            # Draw strikethrough for this line if needed
+                            if font_strikethrough:
+                                text_width = can.stringWidth(line, reportlab_font, font_size)
+                                strike_y = line_y + (font_size / 3)  # Position line through middle of text
+                                can.setStrokeColor(font_color)
+                                can.setLineWidth(1)  # Always use 1px line for strikethrough
+                                can.setDash([])  # Reset to solid line (no dash pattern)
+                                can.line(text_x, strike_y, text_x + text_width, strike_y)
+                                can.setFillColor(font_color)  # Reset fill color for next line
                         
                     elif annotation.get('type') == 'signature':
-                        # Handle signature fields - similar to text but potentially with italic font
-                        can.setFont("Helvetica-Oblique", 12)  # Italic for signature style
-                        can.setFillColor("black")
+                        # Get font properties from annotation
+                        font_family = annotation.get('fontFamily', 'Brush Script MT')
+                        font_bold = annotation.get('fontBold', False)
+                        font_italic = annotation.get('fontItalic', False)
+                        font_strikethrough = annotation.get('fontStrikethrough', False)
+                        font_size = float(annotation.get('fontSize', 12))
+                        font_color = parse_color(annotation.get('fontColor', '#000000'))
+                        
+                        # Map font family and style to reportlab font
+                        reportlab_font = map_font_family(font_family, font_bold, font_italic)
+                        
+                        # Set font and size with error handling
+                        try:
+                            can.setFont(reportlab_font, font_size)
+                        except Exception as e:
+                            print(f"Warning: Failed to set font '{reportlab_font}' for signature annotation, falling back to Helvetica-Oblique. Error: {e}")
+                            can.setFont('Helvetica-Oblique', font_size)
+                            reportlab_font = 'Helvetica-Oblique'
                         
                         # Get border properties from annotation
                         border_color = parse_color(annotation.get('borderColor', 'black'))
@@ -442,10 +783,32 @@ def generate_pdf():
                                 stroke=1 if should_draw_border else 0, 
                                 fill=1 if should_fill_bg else 0)
                         
-                        can.setFillColor("black")
+                        # Draw text with font color (handle multiline)
+                        can.setFillColor(font_color)
                         text_x = pdf_x + 2
-                        text_y = pdf_y + (clipped_height / 2) - 3
-                        can.drawString(text_x, text_y, value)
+                        
+                        # Split text by newlines and draw each line
+                        lines = value.split('\n')
+                        line_height = font_size * 1.2  # Line spacing
+                        
+                        # Calculate starting Y position (top of text block)
+                        total_text_height = len(lines) * line_height
+                        # Start from top and work down
+                        start_y = pdf_y + clipped_height - line_height + (font_size / 3)
+                        
+                        for i, line in enumerate(lines):
+                            line_y = start_y - (i * line_height)
+                            can.drawString(text_x, line_y, line)
+                            
+                            # Draw strikethrough for this line if needed
+                            if font_strikethrough:
+                                text_width = can.stringWidth(line, reportlab_font, font_size)
+                                strike_y = line_y + (font_size / 3)  # Position line through middle of text
+                                can.setStrokeColor(font_color)
+                                can.setLineWidth(1)  # Always use 1px line for strikethrough
+                                can.setDash([])  # Reset to solid line (no dash pattern)
+                                can.line(text_x, strike_y, text_x + text_width, strike_y)
+                                can.setFillColor(font_color)  # Reset fill color for next line
                 
                 can.save()
                 packet.seek(0)

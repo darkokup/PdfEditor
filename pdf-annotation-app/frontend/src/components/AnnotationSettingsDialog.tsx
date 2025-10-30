@@ -34,6 +34,9 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
     type: annotation.type,
     value: annotation.value,
     fontFamily: annotation.fontFamily || 'Arial',
+    fontBold: annotation.fontBold || false,
+    fontItalic: annotation.fontItalic || false,
+    fontStrikethrough: annotation.fontStrikethrough || false,
     fontColor: annotation.fontColor || '#000000',
     fontSize: annotation.fontSize || 12,
   });
@@ -98,6 +101,9 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
         type: annotation.type,
         value: annotation.value,
         fontFamily: annotation.fontFamily || 'Arial',
+        fontBold: annotation.fontBold || false,
+        fontItalic: annotation.fontItalic || false,
+        fontStrikethrough: annotation.fontStrikethrough || false,
         fontColor: annotation.fontColor || '#000000',
         fontSize: annotation.fontSize || 12,
       });
@@ -114,6 +120,9 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
       type: annotationValue.type,
       value: annotationValue.value,
       fontFamily: annotationValue.fontFamily,
+      fontBold: annotationValue.fontBold,
+      fontItalic: annotationValue.fontItalic,
+      fontStrikethrough: annotationValue.fontStrikethrough,
       fontColor: annotationValue.fontColor,
       fontSize: annotationValue.fontSize,
     });
@@ -153,6 +162,9 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
       type: newType,
       value: newValue,
       fontFamily: annotationValue.fontFamily,
+      fontBold: annotationValue.fontBold,
+      fontItalic: annotationValue.fontItalic,
+      fontStrikethrough: annotationValue.fontStrikethrough,
       fontColor: annotationValue.fontColor,
       fontSize: annotationValue.fontSize,
     });
@@ -343,8 +355,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                           <span 
                             style={{
                               display: 'inline-block',
-                              width: '20px',
-                              height: '12px',
+                              width: '25px',
+                              height: '16px',
                               backgroundColor: settings.backgroundColor,
                               border: '1px solid #ccc',
                               marginLeft: '8px',
@@ -407,23 +419,23 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                   >
                     <div className="selected-option">
                       {settings.borderStyle === 'none' && (
-                        <svg width="40" height="16" viewBox="0 0 40 16">
-                          <text x="20" y="12" textAnchor="middle" fontSize="13" fill="#000000ff">None</text>
+                        <svg width="80" height="16" viewBox="0 0 80 16">
+                          <text x="0" y="13" textAnchor="start" fontSize="13" fill="#000000">No Line</text>
                         </svg>
                       )}
                       {settings.borderStyle === 'solid' && (
-                        <svg width="40" height="16" viewBox="0 0 40 16">
-                          <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1"/>
+                        <svg width="80" height="16" viewBox="0 0 80 16">
+                          <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2"/>
                         </svg>
                       )}
                       {settings.borderStyle === 'dashed' && (
-                        <svg width="40" height="16" viewBox="0 0 40 16">
-                          <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="4,2"/>
+                        <svg width="80" height="16" viewBox="0 0 80 16">
+                          <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="4,2"/>
                         </svg>
                       )}
                       {settings.borderStyle === 'dotted' && (
-                        <svg width="40" height="16" viewBox="0 0 40 16">
-                          <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="1,2"/>
+                        <svg width="80" height="16" viewBox="0 0 80 16">
+                          <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="1,2"/>
                         </svg>
                       )}
                     </div>
@@ -437,8 +449,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                         setIsDropdownOpen(false);
                       }}
                     >
-                      <svg width="40" height="16" viewBox="0 0 40 16">
-                        <text x="20" y="12" textAnchor="middle" fontSize="13" fill="#000000ff">None</text>
+                      <svg width="80" height="16" viewBox="0 0 80 16">
+                        <text x="40" y="13" textAnchor="middle" fontSize="13" fill="#000000">No Line</text>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -449,8 +461,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                         setIsDropdownOpen(false);
                       }}
                     >
-                      <svg width="40" height="16" viewBox="0 0 40 16">
-                        <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1"/>
+                      <svg width="80" height="16" viewBox="0 0 80 16">
+                        <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2"/>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -461,8 +473,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                         setIsDropdownOpen(false);
                       }}
                     >
-                      <svg width="40" height="16" viewBox="0 0 40 16">
-                        <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="4,2"/>
+                      <svg width="80" height="16" viewBox="0 0 80 16">
+                        <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="4,2"/>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -473,8 +485,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                         setIsDropdownOpen(false);
                       }}
                     >
-                      <svg width="40" height="16" viewBox="0 0 40 16">
-                        <line x1="4" y1="8" x2="36" y2="8" stroke="#000000ff" strokeWidth="1" strokeDasharray="1,2"/>
+                      <svg width="80" height="16" viewBox="0 0 80 16">
+                        <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="1,2"/>
                       </svg>
                       <span className="dropdown-spacer"></span>
                     </div>
@@ -523,58 +535,152 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                 </select>
               </div>
 
+              {/* Font Controls Group */}
               <div className="form-group">
-                <label htmlFor="fontFamily">Font Type:</label>
-                <select
-                  id="fontFamily"
-                  value={annotationValue.fontFamily}
-                  onChange={(e) => handleValueChange('fontFamily', e.target.value)}
-                  className="type-dropdown"
-                >
-                  <option value="Arial">Arial</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Courier New">Courier New</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Verdana">Verdana</option>
-                  <option value="Helvetica">Helvetica</option>
-                </select>
-              </div>
+                <label>Font:</label>
+                
+                {/* Font Name */}
+                <div style={{ marginBottom: '8px' }}>
+                  <select
+                    id="fontFamily"
+                    value={annotationValue.fontFamily}
+                    onChange={(e) => handleValueChange('fontFamily', e.target.value)}
+                    className="type-dropdown"
+                    style={{ fontFamily: annotationValue.fontFamily }}
+                  >
+                    <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
+                    <option value="Arial Black" style={{ fontFamily: 'Arial Black, sans-serif' }}>Arial Black</option>
+                    <option value="Book Antiqua" style={{ fontFamily: 'Book Antiqua, serif' }}>Book Antiqua</option>
+                    <option value="Brush Script MT" style={{ fontFamily: 'Brush Script MT, cursive' }}>Brush Script MT (Signature)</option>
+                    <option value="Calibri" style={{ fontFamily: 'Calibri, sans-serif' }}>Calibri</option>
+                    <option value="Cambria" style={{ fontFamily: 'Cambria, serif' }}>Cambria</option>
+                    <option value="Candara" style={{ fontFamily: 'Candara, sans-serif' }}>Candara</option>
+                    <option value="Century Gothic" style={{ fontFamily: 'Century Gothic, sans-serif' }}>Century Gothic</option>
+                    <option value="Comic Sans MS" style={{ fontFamily: 'Comic Sans MS, cursive' }}>Comic Sans MS</option>
+                    <option value="Consolas" style={{ fontFamily: 'Consolas, monospace' }}>Consolas</option>
+                    <option value="Copperplate" style={{ fontFamily: 'Copperplate, fantasy' }}>Copperplate</option>
+                    <option value="Courier New" style={{ fontFamily: 'Courier New' }}>Courier New</option>
+                    <option value="Franklin Gothic Medium" style={{ fontFamily: 'Franklin Gothic Medium, sans-serif' }}>Franklin Gothic</option>
+                    <option value="Garamond" style={{ fontFamily: 'Garamond, serif' }}>Garamond</option>
+                    <option value="Geneva" style={{ fontFamily: 'Geneva, sans-serif' }}>Geneva</option>
+                    <option value="Georgia" style={{ fontFamily: 'Georgia' }}>Georgia</option>
+                    <option value="Helvetica" style={{ fontFamily: 'Helvetica' }}>Helvetica</option>
+                    <option value="Impact" style={{ fontFamily: 'Impact' }}>Impact</option>
+                    <option value="Lucida Handwriting" style={{ fontFamily: 'Lucida Handwriting, cursive' }}>Lucida Handwriting (Signature)</option>
+                    <option value="Monaco" style={{ fontFamily: 'Monaco, monospace' }}>Monaco</option>
+                    <option value="Monotype Corsiva" style={{ fontFamily: 'Monotype Corsiva, cursive' }}>Monotype Corsiva (Signature)</option>
+                    <option value="Palatino" style={{ fontFamily: 'Palatino Linotype, Palatino, serif' }}>Palatino</option>
+                    <option value="Papyrus" style={{ fontFamily: 'Papyrus, fantasy' }}>Papyrus</option>
+                    <option value="Tahoma" style={{ fontFamily: 'Tahoma, sans-serif' }}>Tahoma</option>
+                    <option value="Times New Roman" style={{ fontFamily: 'Times New Roman' }}>Times New Roman</option>
+                    <option value="Trebuchet MS" style={{ fontFamily: 'Trebuchet MS' }}>Trebuchet MS</option>
+                    <option value="Verdana" style={{ fontFamily: 'Verdana' }}>Verdana</option>
+                  </select>
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="fontColor">Font Color:</label>
-                <input
-                  type="color"
-                  id="fontColor"
-                  value={annotationValue.fontColor}
-                  onChange={(e) => handleValueChange('fontColor', e.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="fontSize">Font Size:</label>
-                <select
-                  id="fontSize"
-                  value={annotationValue.fontSize}
-                  onChange={(e) => handleValueChange('fontSize', parseInt(e.target.value, 10))}
-                  className="type-dropdown"
-                >
-                  <option value="8">8</option>
-                  <option value="9">9</option>
-                  <option value="10">10</option>
-                  <option value="11">11</option>
-                  <option value="12">12</option>
-                  <option value="14">14</option>
-                  <option value="16">16</option>
-                  <option value="18">18</option>
-                  <option value="20">20</option>
-                  <option value="22">22</option>
-                  <option value="24">24</option>
-                  <option value="28">28</option>
-                  <option value="32">32</option>
-                  <option value="36">36</option>
-                  <option value="48">48</option>
-                  <option value="72">72</option>
-                </select>
+                {/* Font Style Buttons and Color */}
+                <div style={{ marginBottom: '8px', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleValueChange('fontBold', !annotationValue.fontBold)}
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      background: annotationValue.fontBold ? '#007bff' : 'white',
+                      color: annotationValue.fontBold ? 'white' : '#333',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      fontSize: '14px',
+                      minWidth: '40px',
+                    }}
+                    title="Bold"
+                  >
+                    B
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleValueChange('fontItalic', !annotationValue.fontItalic)}
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      background: annotationValue.fontItalic ? '#007bff' : 'white',
+                      color: annotationValue.fontItalic ? 'white' : '#333',
+                      cursor: 'pointer',
+                      fontStyle: 'italic',
+                      fontSize: '14px',
+                      minWidth: '40px',
+                    }}
+                    title="Italic"
+                  >
+                    I
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleValueChange('fontStrikethrough', !annotationValue.fontStrikethrough)}
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      background: annotationValue.fontStrikethrough ? '#007bff' : 'white',
+                      color: annotationValue.fontStrikethrough ? 'white' : '#333',
+                      cursor: 'pointer',
+                      textDecoration: 'line-through',
+                      fontSize: '14px',
+                      minWidth: '40px',
+                    }}
+                    title="Strikethrough"
+                  >
+                    S
+                  </button>
+                  <input
+                    type="color"
+                    id="fontColor"
+                    value={annotationValue.fontColor}
+                    onChange={(e) => handleValueChange('fontColor', e.target.value)}
+                    style={{
+                      marginLeft: '8px',
+                      width: '40px',
+                      height: '34px',
+                      padding: '2px',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                    }}
+                    title="Font Color"
+                  />
+                  <select
+                    id="fontSize"
+                    value={annotationValue.fontSize}
+                    onChange={(e) => handleValueChange('fontSize', parseInt(e.target.value, 10))}
+                    className="type-dropdown"
+                    style={{
+                      marginLeft: '8px',
+                      height: '34px',
+                      width: '60px',
+                      padding: '4px',
+                    }}
+                    title="Font Size"
+                  >
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16">16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="22">22</option>
+                    <option value="24">24</option>
+                    <option value="28">28</option>
+                    <option value="32">32</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                    <option value="72">72</option>
+                  </select>
+                </div>
               </div>
 
               <div className="form-group">
@@ -607,10 +713,15 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                     onChange={(e) => handleValueChange('value', e.target.value)}
                     className="value-input multiline"
                     rows={3}
+                    wrap="off"
                     style={{
                       resize: 'vertical',
                       overflow: 'auto',
+                      whiteSpace: 'pre',
                       fontFamily: annotationValue.fontFamily,
+                      fontWeight: annotationValue.fontBold ? 'bold' : 'normal',
+                      fontStyle: annotationValue.fontItalic ? 'italic' : 'normal',
+                      textDecoration: annotationValue.fontStrikethrough ? 'line-through' : 'none',
                       color: annotationValue.fontColor,
                       fontSize: `${annotationValue.fontSize}px`,
                       backgroundColor: settings.backgroundColor === 'transparent' ? 'white' : settings.backgroundColor,

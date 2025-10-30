@@ -377,8 +377,11 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           onDoubleClick={handleEdit}
           style={{
             fontFamily: annotation.fontFamily || 'Arial',
+            fontWeight: annotation.fontBold ? 'bold' : 'normal',
+            fontStyle: annotation.fontItalic ? 'italic' : 'normal',
+            textDecoration: annotation.fontStrikethrough ? 'line-through' : 'none',
             color: annotation.fontColor || '#000000',
-            fontSize: `${annotation.fontSize || 12}px`,
+            fontSize: `${(annotation.fontSize || 12) * scale}px`,
           }}
         >
           {annotation.value || 'Double-click to edit'}

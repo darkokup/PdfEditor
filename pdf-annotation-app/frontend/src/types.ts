@@ -16,6 +16,9 @@ export interface Annotation {
   borderColor?: string;
   borderWidth?: number; // Line width in pixels (1-10)
   fontFamily?: string; // Font family like 'Arial', 'Times New Roman', 'Courier New', etc.
+  fontBold?: boolean; // Bold style
+  fontItalic?: boolean; // Italic style
+  fontStrikethrough?: boolean; // Strikethrough style
   fontColor?: string; // Hex color for text like '#000000'
   fontSize?: number; // Font size in points (8-72)
 }

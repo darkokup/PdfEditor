@@ -1,0 +1,183 @@
+Mapping font 'Comic Sans MS', bold=False, italic=False
+  Base font for 'Comic Sans MS' is 'Helvetica'
+  Final reportlab font: 'Helvetica'
+Mapping font 'Lucida Handwriting', bold=False, italic=False
+  Base font for 'Lucida Handwriting' is 'Helvetica'
+  'Lucida Handwriting' is a signature font, forcing italic=True
+  Final reportlab font: 'Helvetica-Oblique'
+Mapping font 'Papyrus', bold=False, italic=False
+  Base font for 'Papyrus' is 'Times-Roman'
+  Final reportlab font: 'Times-Roman'
+
+=== Registered 39 system fonts ===
+  Comic-Sans-MS
+  Comic-Sans-MS-Bold
+  Comic-Sans-MS-Italic
+  Comic-Sans-MS-BoldItalic
+  Georgia
+  Georgia-Bold
+  Georgia-Italic
+  Georgia-BoldItalic
+  Verdana
+  Verdana-Bold
+  Verdana-Italic
+  Verdana-BoldItalic
+  Tahoma
+  Tahoma-Bold
+  Palatino
+  Palatino-Bold
+  Palatino-Italic
+  Palatino-BoldItalic
+  Garamond
+  Garamond-Bold
+  Garamond-Italic
+  Calibri
+  Calibri-Bold
+  Calibri-Italic
+  Calibri-BoldItalic
+  Cambria
+  Cambria-Bold
+  Cambria-Italic
+  Cambria-BoldItalic
+  Consolas
+  Consolas-Bold
+  Consolas-Italic
+  Consolas-BoldItalic
+  Impact
+  Trebuchet-MS
+  Trebuchet-MS-Bold
+  Trebuchet-MS-Italic
+  Trebuchet-MS-BoldItalic
+  Arial-Black
+
+=== Registered 39 system fonts ===
+  Comic-Sans-MS
+  Comic-Sans-MS-Bold
+  Comic-Sans-MS-Italic
+  Comic-Sans-MS-BoldItalic
+  Georgia
+  Georgia-Bold
+  Georgia-Italic
+  Georgia-BoldItalic
+  Verdana
+  Verdana-Bold
+  Verdana-Italic
+  Verdana-BoldItalic
+  Tahoma
+  Tahoma-Bold
+  Palatino
+  Palatino-Bold
+  Palatino-Italic
+  Palatino-BoldItalic
+  Garamond
+  Garamond-Bold
+  Garamond-Italic
+  Calibri
+  Calibri-Bold
+  Calibri-Italic
+  Calibri-BoldItalic
+  Cambria
+  Cambria-Bold
+  Cambria-Italic
+  Cambria-BoldItalic
+  Consolas
+  Consolas-Bold
+  Consolas-Italic
+  Consolas-BoldItalic
+  Impact
+  Trebuchet-MS
+  Trebuchet-MS-Bold
+  Trebuchet-MS-Italic
+  Trebuchet-MS-BoldItalic
+  Arial-Black
+
+=== Registered 39 system fonts ===
+  Comic-Sans-MS
+  Comic-Sans-MS-Bold
+  Comic-Sans-MS-Italic
+  Comic-Sans-MS-BoldItalic
+  Georgia
+  Georgia-Bold
+  Georgia-Italic
+  Georgia-BoldItalic
+  Verdana
+  Verdana-Bold
+  Verdana-Italic
+  Verdana-BoldItalic
+  Tahoma
+  Tahoma-Bold
+  Palatino
+  Palatino-Bold
+  Palatino-Italic
+  Palatino-BoldItalic
+  Garamond
+  Garamond-Bold
+  Garamond-Italic
+  Calibri
+  Calibri-Bold
+  Calibri-Italic
+  Calibri-BoldItalic
+  Cambria
+  Cambria-Bold
+  Cambria-Italic
+  Cambria-BoldItalic
+  Consolas
+  Consolas-Bold
+  Consolas-Italic
+  Consolas-BoldItalic
+  Impact
+  Trebuchet-MS
+  Trebuchet-MS-Bold
+  Trebuchet-MS-Italic
+  Trebuchet-MS-BoldItalic
+  Arial-Black
+
+=== Registered 39 system fonts ===
+  Comic-Sans-MS
+  Comic-Sans-MS-Bold
+  Comic-Sans-MS-Italic
+  Comic-Sans-MS-BoldItalic
+  Georgia
+  Georgia-Bold
+  Georgia-Italic
+  Georgia-BoldItalic
+  Verdana
+  Verdana-Bold
+  Verdana-Italic
+  Verdana-BoldItalic
+  Tahoma
+  Tahoma-Bold
+  Palatino
+  Palatino-Bold
+  Palatino-Italic
+  Palatino-BoldItalic
+  Garamond
+  Garamond-Bold
+  Garamond-Italic
+  Calibri
+  Calibri-Bold
+  Calibri-Italic
+  Calibri-BoldItalic
+  Cambria
+  Cambria-Bold
+  Cambria-Italic
+  Cambria-BoldItalic
+  Consolas
+  Consolas-Bold
+  Consolas-Italic
+  Consolas-BoldItalic
+  Impact
+  Trebuchet-MS
+  Trebuchet-MS-Bold
+  Trebuchet-MS-Italic
+  Trebuchet-MS-BoldItalic
+  Arial-Black
+Mapping font 'Comic Sans MS', bold=False, italic=False
+  Using TTF font: 'Comic-Sans-MS'
+Mapping font 'Lucida Handwriting', bold=False, italic=False
+  Fallback to built-in font, base: 'Helvetica'
+  'Lucida Handwriting' is a signature font, forcing italic=True
+  Final reportlab font: 'Helvetica-Oblique'
+Mapping font 'Papyrus', bold=False, italic=False
+  Fallback to built-in font, base: 'Times-Roman'
+  Final reportlab font: 'Times-Roman'

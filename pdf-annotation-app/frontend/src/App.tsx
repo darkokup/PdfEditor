@@ -3,6 +3,7 @@ import CleanPDFViewer from './components/CleanPDFViewer';
 import SimplePDFDisplay from './components/SimplePDFDisplay';
 import ControlPalette from './components/ControlPalette';
 import ProjectManager from './components/ProjectManager';
+import FontLoader from './FontLoader';
 import { Annotation, ProjectData } from './types';
 import { api } from './api';
 import './App.css';
@@ -171,6 +172,7 @@ const App: React.FC = () => {
 
   return (
     <div className="app">
+      <FontLoader />
       <header className="app-header">
         <h1>PDF Annotation Tool</h1>
         <div className="header-controls">

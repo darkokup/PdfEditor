@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Annotation } from '../types';
+import { api } from '../api';
 import './AnnotationSettingsDialog.css';
 
 interface AnnotationSettingsDialogProps {
@@ -50,10 +51,29 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isBgColorDropdownOpen, setIsBgColorDropdownOpen] = useState(false);
   const [customBgColor, setCustomBgColor] = useState('#FFFFFF');
+  const [availableFonts, setAvailableFonts] = useState<string[]>([
+    'Arial', 'Times New Roman', 'Courier New' // Default fallback fonts
+  ]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const borderDropdownRef = useRef<HTMLDivElement>(null);
   const bgColorDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load available fonts from backend on component mount
+  useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        const response = await api.getAvailableFonts();
+        if (response.success && response.fonts.length > 0) {
+          setAvailableFonts(response.fonts);
+        }
+      } catch (error) {
+        console.error('Failed to load available fonts:', error);
+        // Keep default fonts on error
+      }
+    };
+    loadFonts();
+  }, []);
 
   // Close dropdowns when clicking outside or pressing ESC
   useEffect(() => {
@@ -548,33 +568,11 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                     className="type-dropdown"
                     style={{ fontFamily: annotationValue.fontFamily }}
                   >
-                    <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
-                    <option value="Arial Black" style={{ fontFamily: 'Arial Black, sans-serif' }}>Arial Black</option>
-                    <option value="Book Antiqua" style={{ fontFamily: 'Book Antiqua, serif' }}>Book Antiqua</option>
-                    <option value="Brush Script MT" style={{ fontFamily: 'Brush Script MT, cursive' }}>Brush Script MT (Signature)</option>
-                    <option value="Calibri" style={{ fontFamily: 'Calibri, sans-serif' }}>Calibri</option>
-                    <option value="Cambria" style={{ fontFamily: 'Cambria, serif' }}>Cambria</option>
-                    <option value="Candara" style={{ fontFamily: 'Candara, sans-serif' }}>Candara</option>
-                    <option value="Century Gothic" style={{ fontFamily: 'Century Gothic, sans-serif' }}>Century Gothic</option>
-                    <option value="Comic Sans MS" style={{ fontFamily: 'Comic Sans MS, cursive' }}>Comic Sans MS</option>
-                    <option value="Consolas" style={{ fontFamily: 'Consolas, monospace' }}>Consolas</option>
-                    <option value="Copperplate" style={{ fontFamily: 'Copperplate, fantasy' }}>Copperplate</option>
-                    <option value="Courier New" style={{ fontFamily: 'Courier New' }}>Courier New</option>
-                    <option value="Franklin Gothic Medium" style={{ fontFamily: 'Franklin Gothic Medium, sans-serif' }}>Franklin Gothic</option>
-                    <option value="Garamond" style={{ fontFamily: 'Garamond, serif' }}>Garamond</option>
-                    <option value="Geneva" style={{ fontFamily: 'Geneva, sans-serif' }}>Geneva</option>
-                    <option value="Georgia" style={{ fontFamily: 'Georgia' }}>Georgia</option>
-                    <option value="Helvetica" style={{ fontFamily: 'Helvetica' }}>Helvetica</option>
-                    <option value="Impact" style={{ fontFamily: 'Impact' }}>Impact</option>
-                    <option value="Lucida Handwriting" style={{ fontFamily: 'Lucida Handwriting, cursive' }}>Lucida Handwriting (Signature)</option>
-                    <option value="Monaco" style={{ fontFamily: 'Monaco, monospace' }}>Monaco</option>
-                    <option value="Monotype Corsiva" style={{ fontFamily: 'Monotype Corsiva, cursive' }}>Monotype Corsiva (Signature)</option>
-                    <option value="Palatino" style={{ fontFamily: 'Palatino Linotype, Palatino, serif' }}>Palatino</option>
-                    <option value="Papyrus" style={{ fontFamily: 'Papyrus, fantasy' }}>Papyrus</option>
-                    <option value="Tahoma" style={{ fontFamily: 'Tahoma, sans-serif' }}>Tahoma</option>
-                    <option value="Times New Roman" style={{ fontFamily: 'Times New Roman' }}>Times New Roman</option>
-                    <option value="Trebuchet MS" style={{ fontFamily: 'Trebuchet MS' }}>Trebuchet MS</option>
-                    <option value="Verdana" style={{ fontFamily: 'Verdana' }}>Verdana</option>
+                    {availableFonts.map((font) => (
+                      <option key={font} value={font} style={{ fontFamily: font }}>
+                        {font}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

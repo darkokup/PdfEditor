@@ -1,19 +1,23 @@
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS
-import os
-import json
-import pickle
-import base64
-from io import BytesIO
-from pypdf import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.colors import HexColor, toColor
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-import uuid
-from datetime import datetime
+import glob
+import platform
 import sys
+from datetime import datetime
+import uuid
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.colors import HexColor, toColor
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from pypdf import PdfReader, PdfWriter
+from io import BytesIO
+import base64
+import pickle
+import json
+import os
+from flask_cors import CORS
+from flask import Flask, request, jsonify, send_file
+import glob
+import glob
 
 # Force stdout to flush immediately
 sys.stdout.reconfigure(line_buffering=True)
@@ -23,74 +27,118 @@ CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://loc
      allow_headers=['Content-Type'], 
      methods=['GET', 'POST', 'OPTIONS'])
 
-# Register TrueType fonts if available on Windows
 def register_system_fonts():
-    """Register common Windows system fonts with reportlab"""
-    windows_fonts_dir = "C:/Windows/Fonts/"
+    """
+    Register fonts from bundled fonts directory ONLY.
+    Returns a dict mapping font family names to registered font identifiers.
+    Also returns a list of available font families for the frontend.
+    """
+    bundled_fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
     
-    font_files = {
-        'Comic-Sans-MS': 'comic.ttf',
-        'Comic-Sans-MS-Bold': 'comicbd.ttf',
-        'Comic-Sans-MS-Italic': 'comici.ttf',
-        'Comic-Sans-MS-BoldItalic': 'comicz.ttf',
-        'Georgia': 'georgia.ttf',
-        'Georgia-Bold': 'georgiab.ttf',
-        'Georgia-Italic': 'georgiai.ttf',
-        'Georgia-BoldItalic': 'georgiaz.ttf',
-        'Verdana': 'verdana.ttf',
-        'Verdana-Bold': 'verdanab.ttf',
-        'Verdana-Italic': 'verdanai.ttf',
-        'Verdana-BoldItalic': 'verdanaz.ttf',
-        'Tahoma': 'tahoma.ttf',
-        'Tahoma-Bold': 'tahomabd.ttf',
-        'Palatino': 'pala.ttf',
-        'Palatino-Bold': 'palab.ttf',
-        'Palatino-Italic': 'palai.ttf',
-        'Palatino-BoldItalic': 'palabi.ttf',
-        'Garamond': 'gara.ttf',
-        'Garamond-Bold': 'garabd.ttf',
-        'Garamond-Italic': 'garait.ttf',
-        'Calibri': 'calibri.ttf',
-        'Calibri-Bold': 'calibrib.ttf',
-        'Calibri-Italic': 'calibrii.ttf',
-        'Calibri-BoldItalic': 'calibriz.ttf',
-        'Cambria': 'cambria.ttc',
-        'Cambria-Bold': 'cambriab.ttf',
-        'Cambria-Italic': 'cambriai.ttf',
-        'Cambria-BoldItalic': 'cambriaz.ttf',
-        'Consolas': 'consola.ttf',
-        'Consolas-Bold': 'consolab.ttf',
-        'Consolas-Italic': 'consolai.ttf',
-        'Consolas-BoldItalic': 'consolaz.ttf',
-        'Impact': 'impact.ttf',
-        'Trebuchet-MS': 'trebuc.ttf',
-        'Trebuchet-MS-Bold': 'trebucbd.ttf',
-        'Trebuchet-MS-Italic': 'trebucit.ttf',
-        'Trebuchet-MS-BoldItalic': 'trebucbi.ttf',
-        'Arial-Black': 'ariblk.ttf',
+    if not os.path.isdir(bundled_fonts_dir):
+        print(f"WARNING: Bundled fonts directory not found: {bundled_fonts_dir}")
+        print("Creating directory. Please add .ttf font files to this directory.")
+        os.makedirs(bundled_fonts_dir, exist_ok=True)
+        return {}, []
+    
+    print(f"Loading bundled fonts from: {bundled_fonts_dir}")
+    
+    # Font family name mappings (display name -> filename patterns)
+    # This maps friendly names to the actual font filenames
+    font_family_patterns = {
+        # Liberation Fonts (core fonts)
+        'Arial': ['liberationsans-regular', 'liberationsans-bold', 'liberationsans-italic', 'liberationsans-bolditalic'],
+        'Times New Roman': ['liberationserif-regular', 'liberationserif-bold', 'liberationserif-italic', 'liberationserif-bolditalic'],
+        'Courier New': ['liberationmono-regular', 'liberationmono-bold', 'liberationmono-italic', 'liberationmono-bolditalic'],
+        
+        # Google Fonts and others
+        'Roboto': ['roboto-variablefont', 'roboto-italic-variablefont'],
+        'Open Sans': ['opensans-variablefont', 'opensans-italic-variablefont'],
+        'Lato': ['lato-regular', 'lato-bold', 'lato-italic', 'lato-bolditalic', 'lato-black', 'lato-blackitalic', 'lato-light', 'lato-lightitalic'],
+        'Merriweather': ['merriweather-variablefont', 'merriweather-italic-variablefont'],
+        'Montserrat': ['montserrat-variablefont', 'montserrat-italic-variablefont'],
+        'Source Code Pro': ['sourcecodepro-variablefont', 'sourcecodepro-italic-variablefont'],
+        'Saira': ['saira-variablefont', 'saira-italic-variablefont'],
+        
+        # Script/Handwriting fonts
+        'Caveat': ['caveat-variablefont'],
+        'Dancing Script': ['dancingscript-variablefont'],
+        'Pacifico': ['pacifico-regular'],
+        'Great Vibes': ['greatvibes-regular'],
+        'Parisienne': ['parisienne-regular'],
+        'Shadows Into Light': ['shadowsintolight-regular'],
+        'Berkshire Swash': ['berkshireswash-regular'],
+        
+        # Signature fonts
+        'Momo Signature': ['momosignature-regular'],
+        'Are You Serious': ['areyouserious-regular'],
+        
+        # Display/Decorative fonts
+        'Lobster': ['lobster-regular', 'lobstertwo-regular', 'lobstertwo-bold', 'lobstertwo-italic', 'lobstertwo-bolditalic'],
+        'Anton': ['anton-regular'],
+        'Fjalla One': ['fjallaone-regular'],
+        'Gravitas One': ['gravitasone-regular'],
+        'Orbitron': ['orbitron-variablefont'],
+        'Michroma': ['michroma-regular'],
+        'Creepster': ['creepster-regular'],
+        'Sixtyfour': ['sixtyfour-regular-variablefont'],
     }
-    
-    registered_fonts = []
-    for font_name, font_file in font_files.items():
-        font_path = os.path.join(windows_fonts_dir, font_file)
-        if os.path.exists(font_path):
-            try:
-                pdfmetrics.registerFont(TTFont(font_name, font_path))
-                registered_fonts.append(font_name)
-            except Exception as e:
-                print(f"Failed to register font {font_name}: {e}")
-    
-    if registered_fonts:
-        print(f"Successfully registered {len(registered_fonts)} system fonts")
-        with open('font_mapping.log', 'a', encoding='utf-8') as f:
-            f.write(f"\n=== Registered {len(registered_fonts)} system fonts ===\n")
-            for font in registered_fonts:
-                f.write(f"  {font}\n")
-    
-    return registered_fonts
 
-# Register fonts on startup
-REGISTERED_FONTS = register_system_fonts()
+    registered_fonts = {}  # Maps registered name to font path
+    font_family_map = {}   # Maps font family name to list of registered variants
+    available_families = []  # List of font families available for frontend
+    
+    # Find all font files in bundled directory only
+    font_files_to_scan = []
+    font_files_to_scan.extend(glob.glob(os.path.join(bundled_fonts_dir, "*.ttf")))
+    font_files_to_scan.extend(glob.glob(os.path.join(bundled_fonts_dir, "*.ttc")))
+
+    print(f"Found {len(font_files_to_scan)} font files in bundled directory.")
+
+    # Register fonts and build mapping
+    for font_path in font_files_to_scan:
+        try:
+            filename = os.path.basename(font_path)
+            base_name = os.path.splitext(filename)[0].lower()
+            
+            # Register with the filename as the identifier
+            pdfmetrics.registerFont(TTFont(filename, font_path))
+            registered_fonts[filename] = font_path
+            
+            # Map this file to font families
+            for family_name, patterns in font_family_patterns.items():
+                for pattern in patterns:
+                    if base_name == pattern or base_name.startswith(pattern.split('-')[0]):
+                        if family_name not in font_family_map:
+                            font_family_map[family_name] = []
+                            available_families.append(family_name)
+                        font_family_map[family_name].append(filename)
+                        break
+        except Exception as e:
+            print(f"  Warning: Failed to register {filename}: {e}")
+
+    # Sort available families alphabetically
+    available_families.sort()
+
+    if registered_fonts:
+        print(f"Successfully registered {len(registered_fonts)} bundled font files.")
+        print(f"Available font families: {len(available_families)}")
+        with open('font_mapping.log', 'w', encoding='utf-8') as f:
+            f.write(f"=== Bundled Font Registration ===\n\n")
+            f.write(f"Total registered: {len(registered_fonts)} font files\n")
+            f.write(f"Font families mapped: {len(font_family_map)}\n\n")
+            for family in available_families:
+                files = font_family_map.get(family, [])
+                f.write(f"{family}:\n")
+                for file in files:
+                    f.write(f"  - {file}\n")
+    else:
+        print("WARNING: No fonts were registered. Please add .ttf files to the fonts/ directory.")
+    
+    return font_family_map, available_families
+
+# Register fonts on startup - returns a dict mapping font family names to file lists and available families
+FONT_FAMILY_MAP, AVAILABLE_FONT_FAMILIES = register_system_fonts()
 
 # Configure upload folder
 UPLOAD_FOLDER = '../projects'
@@ -170,15 +218,8 @@ def parse_border_style(style_str):
 def map_font_family(font_family, font_bold=False, font_italic=False):
     """
     Map CSS font family and style to reportlab font name.
-    Returns font name that reportlab can use.
-    Now supports TrueType fonts if registered, otherwise falls back to built-in fonts:
-    - Helvetica (normal, bold, oblique, bold-oblique)
-    - Times-Roman (normal, bold, italic, bold-italic)
-    - Courier (normal, bold, oblique, bold-oblique)
-    
-    font_bold: boolean indicating if text should be bold
-    font_italic: boolean indicating if text should be italic
-    Note: strikethrough is handled separately via text decoration, not font
+    Uses the FONT_FAMILY_MAP created during startup to find registered system fonts.
+    Falls back to built-in fonts if the requested font isn't available.
     """
     if not font_family:
         font_family = 'Arial'
@@ -186,60 +227,58 @@ def map_font_family(font_family, font_bold=False, font_italic=False):
     # Write to log file for debugging
     try:
         with open('font_mapping.log', 'a', encoding='utf-8') as f:
-            f.write(f"Mapping font '{font_family}', bold={font_bold}, italic={font_italic}\n")
+            f.write(f"\nMapping font '{font_family}', bold={font_bold}, italic={font_italic}\n")
     except:
         pass
     
-    # Try to use registered TrueType fonts first
-    ttf_font_map = {
-        'Comic Sans MS': 'Comic-Sans-MS',
-        'Georgia': 'Georgia',
-        'Verdana': 'Verdana',
-        'Tahoma': 'Tahoma',
-        'Palatino': 'Palatino',
-        'Garamond': 'Garamond',
-        'Calibri': 'Calibri',
-        'Cambria': 'Cambria',
-        'Consolas': 'Consolas',
-        'Impact': 'Impact',
-        'Trebuchet MS': 'Trebuchet-MS',
-        'Arial Black': 'Arial-Black',
-    }
-    
-    # Check if we have a TTF version of this font
-    if font_family in ttf_font_map:
-        base_ttf_name = ttf_font_map[font_family]
+    # Check if we have this font family registered
+    # Try exact match first (case-sensitive)
+    if font_family in FONT_FAMILY_MAP:
+        available_files = FONT_FAMILY_MAP[font_family]
         
-        # Build the font name with style
+        # Try to find the right variant based on bold/italic
+        # Common patterns: 'b' or 'bd' for bold, 'i' for italic, 'z' or 'bi' for bold-italic
+        selected_font = None
+        
         if font_bold and font_italic:
-            ttf_name = f'{base_ttf_name}-BoldItalic'
-        elif font_bold:
-            ttf_name = f'{base_ttf_name}-Bold'
-        elif font_italic:
-            ttf_name = f'{base_ttf_name}-Italic'
-        else:
-            ttf_name = base_ttf_name
+            # Look for bold-italic variant
+            for f in available_files:
+                base = f.lower().replace('.ttf', '').replace('.ttc', '')
+                if 'z' in base or ('b' in base and 'i' in base) or 'bolditalic' in base:
+                    selected_font = f
+                    break
         
-        # Check if this font variant is registered
-        if ttf_name in REGISTERED_FONTS:
-            try:
-                with open('font_mapping.log', 'a', encoding='utf-8') as f:
-                    f.write(f"  Using TTF font: '{ttf_name}'\n")
-            except:
-                pass
-            return ttf_name
-        # If specific variant not available, try base font
-        elif base_ttf_name in REGISTERED_FONTS and not font_bold and not font_italic:
-            try:
-                with open('font_mapping.log', 'a', encoding='utf-8') as f:
-                    f.write(f"  Using TTF font: '{base_ttf_name}'\n")
-            except:
-                pass
-            return base_ttf_name
+        if not selected_font and font_bold:
+            # Look for bold variant
+            for f in available_files:
+                base = f.lower().replace('.ttf', '').replace('.ttc', '')
+                if ('b' in base or 'bold' in base) and 'i' not in base and 'z' not in base:
+                    selected_font = f
+                    break
+        
+        if not selected_font and font_italic:
+            # Look for italic variant
+            for f in available_files:
+                base = f.lower().replace('.ttf', '').replace('.ttc', '')
+                if 'i' in base and 'b' not in base and 'z' not in base:
+                    selected_font = f
+                    break
+        
+        if not selected_font:
+            # Use the first file (usually the regular variant)
+            selected_font = available_files[0]
+        
+        try:
+            with open('font_mapping.log', 'a', encoding='utf-8') as f:
+                f.write(f"  Using registered font: '{selected_font}'\n")
+        except:
+            pass
+        
+        return selected_font
     
     # Fall back to built-in reportlab fonts
     # Map common web fonts to reportlab font families
-    font_family_map = {
+    fallback_map = {
         # Sans-serif fonts -> Helvetica
         'Arial': 'Helvetica',
         'Helvetica': 'Helvetica',
@@ -282,7 +321,7 @@ def map_font_family(font_family, font_bold=False, font_italic=False):
     }
     
     # Get base font family
-    base_font = font_family_map.get(font_family, 'Helvetica')
+    base_font = fallback_map.get(font_family, 'Helvetica')
     
     try:
         with open('font_mapping.log', 'a', encoding='utf-8') as f:
@@ -946,6 +985,73 @@ def insert_page():
 def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy', 'message': 'PDF Annotation API is running'})
+
+@app.route('/api/available-fonts', methods=['GET'])
+def get_available_fonts():
+    """Get list of available font families from bundled fonts"""
+    return jsonify({
+        'success': True,
+        'fonts': AVAILABLE_FONT_FAMILIES,
+        'count': len(AVAILABLE_FONT_FAMILIES)
+    })
+
+@app.route('/api/fonts/<path:font_family>', methods=['GET'])
+def get_font_file(font_family):
+    """Serve font files for web use"""
+    try:
+        # Get the font files for this family
+        if font_family not in FONT_FAMILY_MAP:
+            return jsonify({'error': f'Font family not found: {font_family}'}), 404
+        
+        # Get the regular variant (first file in the list)
+        font_files = FONT_FAMILY_MAP[font_family]
+        if not font_files:
+            return jsonify({'error': f'No font files found for: {font_family}'}), 404
+        
+        # Use the regular font file (first one)
+        font_filename = font_files[0]
+        font_path = os.path.join(os.path.dirname(__file__), 'fonts', font_filename)
+        
+        if not os.path.exists(font_path):
+            return jsonify({'error': f'Font file not found: {font_filename}'}), 404
+        
+        # Serve the font file with appropriate MIME type
+        return send_file(
+            font_path,
+            mimetype='font/ttf',
+            as_attachment=False,
+            download_name=font_filename
+        )
+    
+    except Exception as e:
+        return jsonify({'error': f'Error serving font: {str(e)}'}), 500
+
+@app.route('/api/font-css', methods=['GET'])
+def get_font_css():
+    """Generate CSS with @font-face declarations for all bundled fonts"""
+    try:
+        css_rules = []
+        
+        for font_family, font_files in FONT_FAMILY_MAP.items():
+            if not font_files:
+                continue
+            
+            # Generate @font-face rule for the regular variant
+            font_filename = font_files[0]
+            css_rule = f"""@font-face {{
+    font-family: '{font_family}';
+    src: url('http://localhost:5001/api/fonts/{font_family}') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}}"""
+            css_rules.append(css_rule)
+        
+        css_content = '\n\n'.join(css_rules)
+        
+        return css_content, 200, {'Content-Type': 'text/css'}
+    
+    except Exception as e:
+        return jsonify({'error': f'Error generating font CSS: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)

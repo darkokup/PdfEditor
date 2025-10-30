@@ -1,183 +1,99 @@
-Mapping font 'Comic Sans MS', bold=False, italic=False
-  Base font for 'Comic Sans MS' is 'Helvetica'
-  Final reportlab font: 'Helvetica'
-Mapping font 'Lucida Handwriting', bold=False, italic=False
-  Base font for 'Lucida Handwriting' is 'Helvetica'
-  'Lucida Handwriting' is a signature font, forcing italic=True
-  Final reportlab font: 'Helvetica-Oblique'
-Mapping font 'Papyrus', bold=False, italic=False
-  Base font for 'Papyrus' is 'Times-Roman'
-  Final reportlab font: 'Times-Roman'
+=== Bundled Font Registration ===
 
-=== Registered 39 system fonts ===
-  Comic-Sans-MS
-  Comic-Sans-MS-Bold
-  Comic-Sans-MS-Italic
-  Comic-Sans-MS-BoldItalic
-  Georgia
-  Georgia-Bold
-  Georgia-Italic
-  Georgia-BoldItalic
-  Verdana
-  Verdana-Bold
-  Verdana-Italic
-  Verdana-BoldItalic
-  Tahoma
-  Tahoma-Bold
-  Palatino
-  Palatino-Bold
-  Palatino-Italic
-  Palatino-BoldItalic
-  Garamond
-  Garamond-Bold
-  Garamond-Italic
-  Calibri
-  Calibri-Bold
-  Calibri-Italic
-  Calibri-BoldItalic
-  Cambria
-  Cambria-Bold
-  Cambria-Italic
-  Cambria-BoldItalic
-  Consolas
-  Consolas-Bold
-  Consolas-Italic
-  Consolas-BoldItalic
-  Impact
-  Trebuchet-MS
-  Trebuchet-MS-Bold
-  Trebuchet-MS-Italic
-  Trebuchet-MS-BoldItalic
-  Arial-Black
+Total registered: 58 font files
+Font families mapped: 27
 
-=== Registered 39 system fonts ===
-  Comic-Sans-MS
-  Comic-Sans-MS-Bold
-  Comic-Sans-MS-Italic
-  Comic-Sans-MS-BoldItalic
-  Georgia
-  Georgia-Bold
-  Georgia-Italic
-  Georgia-BoldItalic
-  Verdana
-  Verdana-Bold
-  Verdana-Italic
-  Verdana-BoldItalic
-  Tahoma
-  Tahoma-Bold
-  Palatino
-  Palatino-Bold
-  Palatino-Italic
-  Palatino-BoldItalic
-  Garamond
-  Garamond-Bold
-  Garamond-Italic
-  Calibri
-  Calibri-Bold
-  Calibri-Italic
-  Calibri-BoldItalic
-  Cambria
-  Cambria-Bold
-  Cambria-Italic
-  Cambria-BoldItalic
-  Consolas
-  Consolas-Bold
-  Consolas-Italic
-  Consolas-BoldItalic
-  Impact
-  Trebuchet-MS
-  Trebuchet-MS-Bold
-  Trebuchet-MS-Italic
-  Trebuchet-MS-BoldItalic
-  Arial-Black
+Anton:
+  - Anton-Regular.ttf
+Are You Serious:
+  - AreYouSerious-Regular.ttf
+Arial:
+  - LiberationSans-Bold.ttf
+  - LiberationSans-BoldItalic.ttf
+  - LiberationSans-Italic.ttf
+  - LiberationSans-Regular.ttf
+Berkshire Swash:
+  - BerkshireSwash-Regular.ttf
+Caveat:
+  - Caveat-VariableFont_wght.ttf
+Courier New:
+  - LiberationMono-Bold.ttf
+  - LiberationMono-BoldItalic.ttf
+  - LiberationMono-Italic.ttf
+  - LiberationMono-Regular.ttf
+Creepster:
+  - Creepster-Regular.ttf
+Dancing Script:
+  - DancingScript-VariableFont_wght.ttf
+Fjalla One:
+  - FjallaOne-Regular.ttf
+Gravitas One:
+  - GravitasOne-Regular.ttf
+Great Vibes:
+  - GreatVibes-Regular.ttf
+Lato:
+  - Lato-Black.ttf
+  - Lato-BlackItalic.ttf
+  - Lato-Bold.ttf
+  - Lato-BoldItalic.ttf
+  - Lato-Italic.ttf
+  - Lato-Light.ttf
+  - Lato-LightItalic.ttf
+  - Lato-Regular.ttf
+  - Lato-Thin.ttf
+  - Lato-ThinItalic.ttf
+Lobster:
+  - Lobster-Regular.ttf
+  - LobsterTwo-Bold.ttf
+  - LobsterTwo-BoldItalic.ttf
+  - LobsterTwo-Italic.ttf
+  - LobsterTwo-Regular.ttf
+Merriweather:
+  - Merriweather-Italic-VariableFont_opsz,wdth,wght.ttf
+  - Merriweather-VariableFont_opsz,wdth,wght.ttf
+Michroma:
+  - Michroma-Regular.ttf
+Momo Signature:
+  - MomoSignature-Regular.ttf
+Montserrat:
+  - Montserrat-Italic-VariableFont_wght.ttf
+  - Montserrat-VariableFont_wght.ttf
+Open Sans:
+  - OpenSans-Italic-VariableFont_wdth,wght.ttf
+  - OpenSans-VariableFont_wdth,wght.ttf
+Orbitron:
+  - Orbitron-VariableFont_wght.ttf
+Pacifico:
+  - Pacifico-Regular.ttf
+Parisienne:
+  - Parisienne-Regular.ttf
+Roboto:
+  - Roboto-Italic-VariableFont_wdth,wght.ttf
+  - Roboto-VariableFont_wdth,wght.ttf
+Saira:
+  - Saira-Italic-VariableFont_wdth,wght.ttf
+  - Saira-VariableFont_wdth,wght.ttf
+Shadows Into Light:
+  - ShadowsIntoLight-Regular.ttf
+Sixtyfour:
+  - Sixtyfour-Regular-VariableFont_BLED,SCAN.ttf
+Source Code Pro:
+  - SourceCodePro-Italic-VariableFont_wght.ttf
+  - SourceCodePro-VariableFont_wght.ttf
+Times New Roman:
+  - LiberationSerif-Bold.ttf
+  - LiberationSerif-BoldItalic.ttf
+  - LiberationSerif-Italic.ttf
+  - LiberationSerif-Regular.ttf
 
-=== Registered 39 system fonts ===
-  Comic-Sans-MS
-  Comic-Sans-MS-Bold
-  Comic-Sans-MS-Italic
-  Comic-Sans-MS-BoldItalic
-  Georgia
-  Georgia-Bold
-  Georgia-Italic
-  Georgia-BoldItalic
-  Verdana
-  Verdana-Bold
-  Verdana-Italic
-  Verdana-BoldItalic
-  Tahoma
-  Tahoma-Bold
-  Palatino
-  Palatino-Bold
-  Palatino-Italic
-  Palatino-BoldItalic
-  Garamond
-  Garamond-Bold
-  Garamond-Italic
-  Calibri
-  Calibri-Bold
-  Calibri-Italic
-  Calibri-BoldItalic
-  Cambria
-  Cambria-Bold
-  Cambria-Italic
-  Cambria-BoldItalic
-  Consolas
-  Consolas-Bold
-  Consolas-Italic
-  Consolas-BoldItalic
-  Impact
-  Trebuchet-MS
-  Trebuchet-MS-Bold
-  Trebuchet-MS-Italic
-  Trebuchet-MS-BoldItalic
-  Arial-Black
+Mapping font 'Are You Serious', bold=False, italic=False
+  Using registered font: 'AreYouSerious-Regular.ttf'
 
-=== Registered 39 system fonts ===
-  Comic-Sans-MS
-  Comic-Sans-MS-Bold
-  Comic-Sans-MS-Italic
-  Comic-Sans-MS-BoldItalic
-  Georgia
-  Georgia-Bold
-  Georgia-Italic
-  Georgia-BoldItalic
-  Verdana
-  Verdana-Bold
-  Verdana-Italic
-  Verdana-BoldItalic
-  Tahoma
-  Tahoma-Bold
-  Palatino
-  Palatino-Bold
-  Palatino-Italic
-  Palatino-BoldItalic
-  Garamond
-  Garamond-Bold
-  Garamond-Italic
-  Calibri
-  Calibri-Bold
-  Calibri-Italic
-  Calibri-BoldItalic
-  Cambria
-  Cambria-Bold
-  Cambria-Italic
-  Cambria-BoldItalic
-  Consolas
-  Consolas-Bold
-  Consolas-Italic
-  Consolas-BoldItalic
-  Impact
-  Trebuchet-MS
-  Trebuchet-MS-Bold
-  Trebuchet-MS-Italic
-  Trebuchet-MS-BoldItalic
-  Arial-Black
-Mapping font 'Comic Sans MS', bold=False, italic=False
-  Using TTF font: 'Comic-Sans-MS'
-Mapping font 'Lucida Handwriting', bold=False, italic=False
-  Fallback to built-in font, base: 'Helvetica'
-  'Lucida Handwriting' is a signature font, forcing italic=True
-  Final reportlab font: 'Helvetica-Oblique'
-Mapping font 'Papyrus', bold=False, italic=False
-  Fallback to built-in font, base: 'Times-Roman'
-  Final reportlab font: 'Times-Roman'
+Mapping font 'Berkshire Swash', bold=False, italic=False
+  Using registered font: 'BerkshireSwash-Regular.ttf'
+
+Mapping font 'Creepster', bold=False, italic=False
+  Using registered font: 'Creepster-Regular.ttf'
+
+Mapping font 'Lobster', bold=False, italic=False
+  Using registered font: 'Lobster-Regular.ttf'

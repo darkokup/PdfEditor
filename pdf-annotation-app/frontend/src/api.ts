@@ -72,4 +72,9 @@ export const api = {
     const response = await axios.get(`${API_BASE_URL}/health`);
     return response.data;
   },
+
+  getAvailableFonts: async (): Promise<{ success: boolean; fonts: string[]; count: number }> => {
+    const response = await axios.get(`${API_BASE_URL}/available-fonts`);
+    return response.data;
+  },
 };

@@ -21,6 +21,8 @@ interface SimpleAnnotationProps {
   onSelect?: (ctrlKey: boolean, shiftKey: boolean) => void; // Callback when annotation is clicked
   selectedAnnotationIds?: string[]; // All currently selected annotation IDs
   allAnnotations?: Annotation[]; // All annotations for multi-drag
+  isNewlyAdded?: boolean; // Is this a newly added annotation
+  onClearNewlyAdded?: () => void; // Callback to clear newly added flag
 }
 
 const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
@@ -39,6 +41,8 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   onSelect,
   selectedAnnotationIds = [],
   allAnnotations = [],
+  isNewlyAdded = false,
+  onClearNewlyAdded,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -49,7 +53,14 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
   const [resizeDirection, setResizeDirection] = useState<'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null>(null);
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(annotation.value);
   const elementRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLTextAreaElement>(null);
+  const justDraggedRef = useRef(false); // Track if annotation was just dragged
+  const justResizedRef = useRef(false); // Track if annotation was just resized
+  const hasMoved = useRef(false); // Track if annotation actually moved during drag
+  const wasNewlyAddedRef = useRef(false); // Track if annotation was newly added when edit started
 
   // Clean border style calculation
   const getBorderStyle = () => {
@@ -111,14 +122,82 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     onSettingsDialogOpenChange?.(true); // Notify that settings dialog is opening
   };
 
+  const handleSaveEdit = () => {
+    if (editValue !== annotation.value) {
+      onUpdate(annotation.id, { value: editValue });
+    }
+    setIsEditing(false);
+    // Clear the newly added flag since the user has saved their first edit
+    wasNewlyAddedRef.current = false;
+  };
+
+  const handleCancelEdit = () => {
+    setEditValue(annotation.value);
+    setIsEditing(false);
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditValue(e.target.value);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      // If this was a newly added annotation and ESC is pressed, delete it
+      if (wasNewlyAddedRef.current) {
+        wasNewlyAddedRef.current = false; // Reset the flag
+        onDelete(annotation.id);
+        onClearNewlyAdded?.();
+      } else {
+        handleCancelEdit();
+      }
+    } else if (e.key === 'Enter' && !e.shiftKey && !annotation.multiline) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSaveEdit();
+    }
+  };
+
+  const handleEditBlur = () => {
+    // Save changes when clicking outside
+    handleSaveEdit();
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent overlay from creating new annotation
-    onSelect?.(e.ctrlKey, e.shiftKey); // Pass ctrl and shift key states to parent
+    
+    // Don't trigger selection if we just finished dragging or resizing
+    if (justDraggedRef.current || justResizedRef.current) {
+      justDraggedRef.current = false;
+      justResizedRef.current = false;
+      return;
+    }
+    
+    // If already selected, start editing
+    if (isSelected && !e.ctrlKey && !e.shiftKey) {
+      setIsEditing(true);
+      setEditValue(annotation.value);
+      // Focus the input after state updates
+      setTimeout(() => {
+        editInputRef.current?.focus();
+        editInputRef.current?.select();
+      }, 0);
+    } else {
+      // Not selected or using modifier keys - just select
+      onSelect?.(e.ctrlKey, e.shiftKey);
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent overlay click
+    
+    // Don't start dragging if in edit mode or clicking on textarea
+    if (isEditing || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+      return;
+    }
+    
     if (e.target === elementRef.current || (e.target as Element).classList.contains('simple-annotation-text')) {
+      hasMoved.current = false; // Reset movement tracking
       setIsDragging(true);
       setDragStart({
         x: e.clientX - annotation.x * scale,
@@ -141,6 +220,11 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           // Calculate delta for multi-drag
           const deltaX = newX - annotation.x;
           const deltaY = newY - annotation.y;
+          
+          // Mark as moved if there's any significant movement
+          if (Math.abs(deltaX) > 0.1 || Math.abs(deltaY) > 0.1) {
+            hasMoved.current = true;
+          }
           
           // Constrain to overlay bounds
           const maxX = Math.max(0, (rect.width / scale) - annotation.width);
@@ -189,6 +273,18 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     const handleMouseUpCallback = () => {
       if (isDragging) {
         onDragEnd?.(); // Suppress overlay clicks after drag
+        
+        // Only mark as "just dragged" if there was actual movement
+        if (hasMoved.current) {
+          justDraggedRef.current = true;
+          
+          // Reset the flag after a short delay to allow click handler to check it
+          setTimeout(() => {
+            justDraggedRef.current = false;
+          }, 50);
+        }
+        
+        hasMoved.current = false; // Reset for next drag
       }
       setIsDragging(false);
     };
@@ -383,6 +479,12 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
     const handleResizeUp = () => {
       if (isResizing) {
         onDragEnd?.();
+        justResizedRef.current = true; // Mark that we just finished resizing
+        
+        // Reset the flag after a short delay to allow click handler to check it
+        setTimeout(() => {
+          justResizedRef.current = false;
+        }, 50);
       }
       setIsResizing(false);
       setResizeDirection(null);
@@ -397,6 +499,24 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
       };
     }
   }, [isResizing, resizeDirection, resizeStart, annotation.id, initialPosition, scale, onUpdate, onDragEnd]);
+
+  // Auto-edit effect for newly added annotations
+  useEffect(() => {
+    if (isNewlyAdded && !isEditing) {
+      wasNewlyAddedRef.current = true; // Mark that this annotation was newly added
+      setIsEditing(true);
+      setEditValue(annotation.value);
+      // Focus the textarea after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        if (editInputRef.current) {
+          editInputRef.current.focus();
+          editInputRef.current.select();
+        }
+      }, 50);
+      // Clear the newly added flag since we've started editing
+      onClearNewlyAdded?.();
+    }
+  }, [isNewlyAdded, isEditing, annotation.value, onClearNewlyAdded]);
 
   const getBackgroundClass = () => {
     // Deprecated: kept for backward compatibility
@@ -434,7 +554,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           fontSize: `${Math.max(10, 12 * scale)}px`,
           minWidth: `${Math.max(60, 80 * scale)}px`,
           minHeight: `${Math.max(18, 20 * scale)}px`,
-          cursor: isDragging ? 'grabbing' : 'grab',
+          cursor: isEditing ? 'text' : (isDragging ? 'grabbing' : 'grab'),
           border: getBorderStyle(),
           backgroundColor: getBackgroundStyle(),
         } as React.CSSProperties}
@@ -497,20 +617,49 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           </button>
         )}
         
-        <span 
-          className={`simple-annotation-text ${getTextClass()}`}
-          onDoubleClick={handleEdit}
-          style={{
-            fontFamily: annotation.fontFamily || 'Arial',
-            fontWeight: annotation.fontBold ? 'bold' : 'normal',
-            fontStyle: annotation.fontItalic ? 'italic' : 'normal',
-            textDecoration: annotation.fontStrikethrough ? 'line-through' : 'none',
-            color: annotation.fontColor || '#000000',
-            fontSize: `${(annotation.fontSize || 12) * scale}px`,
-          }}
-        >
-          {annotation.value || 'Double-click to edit'}
-        </span>
+        {/* Text display or edit mode */}
+        {isEditing ? (
+          <textarea
+            ref={editInputRef}
+            value={editValue}
+            onChange={handleEditChange}
+            onKeyDown={handleEditKeyDown}
+            onBlur={handleEditBlur}
+            onClick={(e) => e.stopPropagation()}
+            className={`simple-annotation-text ${getTextClass()}`}
+            style={{
+              fontFamily: annotation.fontFamily || 'Arial',
+              fontWeight: annotation.fontBold ? 'bold' : 'normal',
+              fontStyle: annotation.fontItalic ? 'italic' : 'normal',
+              textDecoration: annotation.fontStrikethrough ? 'line-through' : 'none',
+              color: annotation.fontColor || '#000000',
+              fontSize: `${(annotation.fontSize || 12) * scale}px`,
+              border: '2px solid #007bff',
+              outline: 'none',
+              resize: 'none',
+              width: '100%',
+              height: '100%',
+              padding: '2px 4px',
+              boxSizing: 'border-box',
+              background: 'white',
+            }}
+          />
+        ) : (
+          <span 
+            className={`simple-annotation-text ${getTextClass()}`}
+            onDoubleClick={handleEdit}
+            style={{
+              fontFamily: annotation.fontFamily || 'Arial',
+              fontWeight: annotation.fontBold ? 'bold' : 'normal',
+              fontStyle: annotation.fontItalic ? 'italic' : 'normal',
+              textDecoration: annotation.fontStrikethrough ? 'line-through' : 'none',
+              color: annotation.fontColor || '#000000',
+              fontSize: `${(annotation.fontSize || 12) * scale}px`,
+            }}
+          >
+            {annotation.value || 'Click to edit'}
+          </span>
+        )}
         
         {/* Resize handles - only show when selected */}
         {isSelected && (

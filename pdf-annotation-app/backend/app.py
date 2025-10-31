@@ -621,233 +621,81 @@ def generate_pdf():
                     
                     print(f"  Final annotation: '{value}' at web({clipped_x},{clipped_y}) -> pdf({pdf_x},{pdf_y}) size({clipped_width},{clipped_height})")
                     
-                    if annotation.get('type') == 'text':
-                        # Get font properties from annotation
-                        font_family = annotation.get('fontFamily', 'Arial')
-                        font_bold = annotation.get('fontBold', False)
-                        font_italic = annotation.get('fontItalic', False)
-                        font_strikethrough = annotation.get('fontStrikethrough', False)
-                        font_size = float(annotation.get('fontSize', 12))
-                        font_color = parse_color(annotation.get('fontColor', '#000000'))
+                    # All annotations are now text type
+                    # Get font properties from annotation
+                    font_family = annotation.get('fontFamily', 'Arial')
+                    font_bold = annotation.get('fontBold', False)
+                    font_italic = annotation.get('fontItalic', False)
+                    font_strikethrough = annotation.get('fontStrikethrough', False)
+                    font_size = float(annotation.get('fontSize', 12))
+                    font_color = parse_color(annotation.get('fontColor', '#000000'))
+                    
+                    # Map font family and style to reportlab font
+                    reportlab_font = map_font_family(font_family, font_bold, font_italic)
+                    
+                    # Set font and size with error handling
+                    try:
+                        can.setFont(reportlab_font, font_size)
+                    except Exception as e:
+                        print(f"Warning: Failed to set font '{reportlab_font}' for annotation, falling back to Helvetica. Error: {e}")
+                        can.setFont('Helvetica', font_size)
+                        reportlab_font = 'Helvetica'
+                    
+                    # Get border properties from annotation
+                    border_color = parse_color(annotation.get('borderColor', 'black'))
+                    border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
+                    border_width = float(annotation.get('borderWidth', 1))
+                    
+                    # Get background fill settings
+                    should_fill_bg, fill_color = get_background_fill(annotation)
+                    
+                    # Determine if border should be drawn
+                    should_draw_border = border_style is not None
+                    
+                    if should_draw_border:
+                        # Apply border styling
+                        can.setStrokeColor(border_color)
+                        can.setLineWidth(border_width)
+                        if border_style:
+                            can.setDash(border_style)
+                        else:
+                            can.setDash([])  # solid line
+                    
+                    # Set fill color if background should be filled
+                    if should_fill_bg and fill_color:
+                        can.setFillColor(fill_color)
+                    
+                    # Draw rectangle with border and/or fill
+                    can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
+                            stroke=1 if should_draw_border else 0, 
+                            fill=1 if should_fill_bg else 0)
+                    
+                    # Draw text inside the box with font color (handle multiline)
+                    can.setFillColor(font_color)
+                    text_x = pdf_x + 2  # small padding
+                    
+                    # Split text by newlines and draw each line
+                    lines = value.split('\n')
+                    line_height = font_size * 1.2  # Line spacing
+                    
+                    # Calculate starting Y position (top of text block)
+                    total_text_height = len(lines) * line_height
+                    # Start from top and work down
+                    start_y = pdf_y + clipped_height - line_height + (font_size / 3)
+                    
+                    for i, line in enumerate(lines):
+                        line_y = start_y - (i * line_height)
+                        can.drawString(text_x, line_y, line)
                         
-                        # Map font family and style to reportlab font
-                        reportlab_font = map_font_family(font_family, font_bold, font_italic)
-                        
-                        # Set font and size with error handling
-                        try:
-                            can.setFont(reportlab_font, font_size)
-                        except Exception as e:
-                            print(f"Warning: Failed to set font '{reportlab_font}' for text annotation, falling back to Helvetica. Error: {e}")
-                            can.setFont('Helvetica', font_size)
-                            reportlab_font = 'Helvetica'
-                        
-                        # Get border properties from annotation
-                        border_color = parse_color(annotation.get('borderColor', 'black'))
-                        border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
-                        border_width = float(annotation.get('borderWidth', 1))
-                        
-                        # Get background fill settings
-                        should_fill_bg, fill_color = get_background_fill(annotation)
-                        
-                        # Determine if border should be drawn
-                        should_draw_border = border_style is not None
-                        
-                        if should_draw_border:
-                            # Apply border styling
-                            can.setStrokeColor(border_color)
-                            can.setLineWidth(border_width)
-                            if border_style:
-                                can.setDash(border_style)
-                            else:
-                                can.setDash([])  # solid line
-                        
-                        # Set fill color if background should be filled
-                        if should_fill_bg and fill_color:
-                            can.setFillColor(fill_color)
-                        
-                        # Draw rectangle with border and/or fill
-                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
-                                stroke=1 if should_draw_border else 0, 
-                                fill=1 if should_fill_bg else 0)
-                        
-                        # Draw text inside the box with font color (handle multiline)
-                        can.setFillColor(font_color)
-                        text_x = pdf_x + 2  # small padding
-                        
-                        # Split text by newlines and draw each line
-                        lines = value.split('\n')
-                        line_height = font_size * 1.2  # Line spacing
-                        
-                        # Calculate starting Y position (top of text block)
-                        total_text_height = len(lines) * line_height
-                        # Start from top and work down
-                        start_y = pdf_y + clipped_height - line_height + (font_size / 3)
-                        
-                        for i, line in enumerate(lines):
-                            line_y = start_y - (i * line_height)
-                            can.drawString(text_x, line_y, line)
-                            
-                            # Draw strikethrough for this line if needed
-                            if font_strikethrough:
-                                text_width = can.stringWidth(line, reportlab_font, font_size)
-                                strike_y = line_y + (font_size / 3)  # Position line through middle of text
-                                can.setStrokeColor(font_color)
-                                can.setLineWidth(1)  # Always use 1px line for strikethrough
-                                can.setDash([])  # Reset to solid line (no dash pattern)
-                                can.line(text_x, strike_y, text_x + text_width, strike_y)
-                                can.setFillColor(font_color)  # Reset fill color for next line
-                        
-                    elif annotation.get('type') == 'date':
-                        # Get font properties from annotation
-                        font_family = annotation.get('fontFamily', 'Arial')
-                        font_bold = annotation.get('fontBold', False)
-                        font_italic = annotation.get('fontItalic', False)
-                        font_strikethrough = annotation.get('fontStrikethrough', False)
-                        font_size = float(annotation.get('fontSize', 12))
-                        font_color = parse_color(annotation.get('fontColor', '#000000'))
-                        
-                        # Map font family and style to reportlab font
-                        reportlab_font = map_font_family(font_family, font_bold, font_italic)
-                        
-                        # Set font and size with error handling
-                        try:
-                            can.setFont(reportlab_font, font_size)
-                        except Exception as e:
-                            print(f"Warning: Failed to set font '{reportlab_font}' for date annotation, falling back to Helvetica. Error: {e}")
-                            can.setFont('Helvetica', font_size)
-                            reportlab_font = 'Helvetica'
-                        
-                        # Get border properties from annotation
-                        border_color = parse_color(annotation.get('borderColor', 'black'))
-                        border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
-                        border_width = float(annotation.get('borderWidth', 1))
-                        
-                        # Get background fill settings
-                        should_fill_bg, fill_color = get_background_fill(annotation)
-                        
-                        # Determine if border should be drawn
-                        should_draw_border = border_style is not None
-                        
-                        if should_draw_border:
-                            # Apply border styling
-                            can.setStrokeColor(border_color)
-                            can.setLineWidth(border_width)
-                            if border_style:
-                                can.setDash(border_style)
-                            else:
-                                can.setDash([])  # solid line
-                        
-                        # Set fill color if background should be filled
-                        if should_fill_bg and fill_color:
-                            can.setFillColor(fill_color)
-                        
-                        # Draw rectangle with border and/or fill
-                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
-                                stroke=1 if should_draw_border else 0, 
-                                fill=1 if should_fill_bg else 0)
-                        
-                        # Draw text with font color (handle multiline)
-                        can.setFillColor(font_color)
-                        text_x = pdf_x + 2
-                        
-                        # Split text by newlines and draw each line
-                        lines = value.split('\n')
-                        line_height = font_size * 1.2  # Line spacing
-                        
-                        # Calculate starting Y position (top of text block)
-                        total_text_height = len(lines) * line_height
-                        # Start from top and work down
-                        start_y = pdf_y + clipped_height - line_height + (font_size / 3)
-                        
-                        for i, line in enumerate(lines):
-                            line_y = start_y - (i * line_height)
-                            can.drawString(text_x, line_y, line)
-                            
-                            # Draw strikethrough for this line if needed
-                            if font_strikethrough:
-                                text_width = can.stringWidth(line, reportlab_font, font_size)
-                                strike_y = line_y + (font_size / 3)  # Position line through middle of text
-                                can.setStrokeColor(font_color)
-                                can.setLineWidth(1)  # Always use 1px line for strikethrough
-                                can.setDash([])  # Reset to solid line (no dash pattern)
-                                can.line(text_x, strike_y, text_x + text_width, strike_y)
-                                can.setFillColor(font_color)  # Reset fill color for next line
-                        
-                    elif annotation.get('type') == 'signature':
-                        # Get font properties from annotation
-                        font_family = annotation.get('fontFamily', 'Brush Script MT')
-                        font_bold = annotation.get('fontBold', False)
-                        font_italic = annotation.get('fontItalic', False)
-                        font_strikethrough = annotation.get('fontStrikethrough', False)
-                        font_size = float(annotation.get('fontSize', 12))
-                        font_color = parse_color(annotation.get('fontColor', '#000000'))
-                        
-                        # Map font family and style to reportlab font
-                        reportlab_font = map_font_family(font_family, font_bold, font_italic)
-                        
-                        # Set font and size with error handling
-                        try:
-                            can.setFont(reportlab_font, font_size)
-                        except Exception as e:
-                            print(f"Warning: Failed to set font '{reportlab_font}' for signature annotation, falling back to Helvetica-Oblique. Error: {e}")
-                            can.setFont('Helvetica-Oblique', font_size)
-                            reportlab_font = 'Helvetica-Oblique'
-                        
-                        # Get border properties from annotation
-                        border_color = parse_color(annotation.get('borderColor', 'black'))
-                        border_style = parse_border_style(annotation.get('borderStyle', 'solid'))
-                        border_width = float(annotation.get('borderWidth', 1))
-                        
-                        # Get background fill settings
-                        should_fill_bg, fill_color = get_background_fill(annotation)
-                        
-                        # Determine if border should be drawn
-                        should_draw_border = border_style is not None
-                        
-                        if should_draw_border:
-                            # Apply border styling
-                            can.setStrokeColor(border_color)
-                            can.setLineWidth(border_width)
-                            if border_style:
-                                can.setDash(border_style)
-                            else:
-                                can.setDash([])  # solid line
-                        
-                        # Set fill color if background should be filled
-                        if should_fill_bg and fill_color:
-                            can.setFillColor(fill_color)
-                        
-                        # Draw rectangle with border and/or fill
-                        can.rect(pdf_x, pdf_y, clipped_width, clipped_height, 
-                                stroke=1 if should_draw_border else 0, 
-                                fill=1 if should_fill_bg else 0)
-                        
-                        # Draw text with font color (handle multiline)
-                        can.setFillColor(font_color)
-                        text_x = pdf_x + 2
-                        
-                        # Split text by newlines and draw each line
-                        lines = value.split('\n')
-                        line_height = font_size * 1.2  # Line spacing
-                        
-                        # Calculate starting Y position (top of text block)
-                        total_text_height = len(lines) * line_height
-                        # Start from top and work down
-                        start_y = pdf_y + clipped_height - line_height + (font_size / 3)
-                        
-                        for i, line in enumerate(lines):
-                            line_y = start_y - (i * line_height)
-                            can.drawString(text_x, line_y, line)
-                            
-                            # Draw strikethrough for this line if needed
-                            if font_strikethrough:
-                                text_width = can.stringWidth(line, reportlab_font, font_size)
-                                strike_y = line_y + (font_size / 3)  # Position line through middle of text
-                                can.setStrokeColor(font_color)
-                                can.setLineWidth(1)  # Always use 1px line for strikethrough
-                                can.setDash([])  # Reset to solid line (no dash pattern)
-                                can.line(text_x, strike_y, text_x + text_width, strike_y)
-                                can.setFillColor(font_color)  # Reset fill color for next line
+                        # Draw strikethrough for this line if needed
+                        if font_strikethrough:
+                            text_width = can.stringWidth(line, reportlab_font, font_size)
+                            strike_y = line_y + (font_size / 3)  # Position line through middle of text
+                            can.setStrokeColor(font_color)
+                            can.setLineWidth(1)  # Always use 1px line for strikethrough
+                            can.setDash([])  # Reset to solid line (no dash pattern)
+                            can.line(text_x, strike_y, text_x + text_width, strike_y)
+                            can.setFillColor(font_color)  # Reset fill color for next line
                 
                 can.save()
                 packet.seek(0)

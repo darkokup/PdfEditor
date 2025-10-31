@@ -18,6 +18,8 @@ interface AnnotationOverlayProps {
   selectedAnnotations?: Set<string>; // Selected annotation IDs
   onAnnotationSelect?: (id: string, ctrlKey: boolean, shiftKey: boolean) => void; // Callback when annotation is selected
   onClearSelection?: () => void; // Callback to clear all selections
+  newlyAddedAnnotationId?: string | null; // ID of newly added annotation to auto-edit
+  onClearNewlyAdded?: () => void; // Callback to clear newly added flag
 }
 
 const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
@@ -36,6 +38,8 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
   selectedAnnotations = new Set(), // Default to empty set
   onAnnotationSelect,
   onClearSelection,
+  newlyAddedAnnotationId,
+  onClearNewlyAdded,
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [pdfCanvas, setPdfCanvas] = useState<HTMLCanvasElement | null>(null);
@@ -183,6 +187,8 @@ const AnnotationOverlay: React.FC<AnnotationOverlayProps> = ({
           onSelect={(ctrlKey, shiftKey) => onAnnotationSelect?.(annotation.id, ctrlKey, shiftKey)}
           selectedAnnotationIds={Array.from(selectedAnnotations)}
           allAnnotations={annotations}
+          isNewlyAdded={newlyAddedAnnotationId === annotation.id}
+          onClearNewlyAdded={onClearNewlyAdded}
         />
       ))}
     </div>

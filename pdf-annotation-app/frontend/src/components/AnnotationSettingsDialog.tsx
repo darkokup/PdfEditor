@@ -32,7 +32,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
   });
 
   const [annotationValue, setAnnotationValue] = useState({
-    type: annotation.type,
+    type: 'text' as const,
     value: annotation.value,
     fontFamily: annotation.fontFamily || 'Arial',
     fontBold: annotation.fontBold || false,
@@ -118,7 +118,7 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
         borderWidth: annotation.borderWidth || 1,
       });
       setAnnotationValue({
-        type: annotation.type,
+        type: 'text' as const,
         value: annotation.value,
         fontFamily: annotation.fontFamily || 'Arial',
         fontBold: annotation.fontBold || false,
@@ -159,35 +159,6 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
 
   const handleValueChange = (key: string, value: any) => {
     setAnnotationValue(prev => ({ ...prev, [key]: value }));
-  };
-
-  const formatCurrentDate = (): string => {
-    const now = new Date();
-    return now.toLocaleDateString('en-US'); // MM/DD/YYYY format
-  };
-
-  const handleAnnotationTypeChange = (newType: 'text' | 'date' | 'signature') => {
-    let newValue = annotationValue.value;
-    
-    // Set appropriate default values based on type
-    if (newType === 'date' && annotationValue.type !== 'date') {
-      newValue = formatCurrentDate();
-    } else if (newType === 'signature' && annotationValue.type !== 'signature') {
-      newValue = '[Signature]';
-    } else if (newType === 'text' && annotationValue.type !== 'text') {
-      newValue = 'Text';
-    }
-    
-    setAnnotationValue({
-      type: newType,
-      value: newValue,
-      fontFamily: annotationValue.fontFamily,
-      fontBold: annotationValue.fontBold,
-      fontItalic: annotationValue.fontItalic,
-      fontStrikethrough: annotationValue.fontStrikethrough,
-      fontColor: annotationValue.fontColor,
-      fontSize: annotationValue.fontSize,
-    });
   };
 
   const validateIntegerInput = (value: string, min: number, max: number): number => {
@@ -541,20 +512,6 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
           {/* Value Tab */}
           {activeTab === 'value' && (
             <div className="tab-content">
-              <div className="form-group">
-                <label htmlFor="annotationType">Annotation Type:</label>
-                <select
-                  id="annotationType"
-                  value={annotationValue.type}
-                  onChange={(e) => handleAnnotationTypeChange(e.target.value as 'text' | 'date' | 'signature')}
-                  className="type-dropdown"
-                >
-                  <option value="text">Text</option>
-                  <option value="date">Date</option>
-                  <option value="signature">Signature</option>
-                </select>
-              </div>
-
               {/* Font Controls Group */}
               <div className="form-group">
                 <label>Font:</label>
@@ -683,54 +640,27 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
 
               <div className="form-group">
                 <label htmlFor="annotationValue">Value:</label>
-                {annotationValue.type === 'date' ? (
-                  <input
-                    type="date"
-                    id="annotationValue"
-                    value={(() => {
-                      try {
-                        const date = new Date(annotationValue.value);
-                        if (isNaN(date.getTime())) {
-                          return new Date().toISOString().split('T')[0];
-                        }
-                        return date.toISOString().split('T')[0];
-                      } catch {
-                        return new Date().toISOString().split('T')[0];
-                      }
-                    })()}
-                    onChange={(e) => {
-                      const date = new Date(e.target.value);
-                      handleValueChange('value', date.toLocaleDateString('en-US'));
-                    }}
-                    className="value-input"
-                  />
-                ) : (
-                  <textarea
-                    id="annotationValue"
-                    value={annotationValue.value}
-                    onChange={(e) => handleValueChange('value', e.target.value)}
-                    className="value-input multiline"
-                    rows={3}
-                    wrap="off"
-                    style={{
-                      resize: 'vertical',
-                      overflow: 'auto',
-                      whiteSpace: 'pre',
-                      fontFamily: annotationValue.fontFamily,
-                      fontWeight: annotationValue.fontBold ? 'bold' : 'normal',
-                      fontStyle: annotationValue.fontItalic ? 'italic' : 'normal',
-                      textDecoration: annotationValue.fontStrikethrough ? 'line-through' : 'none',
-                      color: annotationValue.fontColor,
-                      fontSize: `${annotationValue.fontSize}px`,
-                      backgroundColor: settings.backgroundColor === 'transparent' ? 'white' : settings.backgroundColor,
-                    }}
-                    placeholder={
-                      annotationValue.type === 'signature' 
-                        ? 'Enter signature text or use [Signature]'
-                        : 'Enter annotation value'
-                    }
-                  />
-                )}
+                <textarea
+                  id="annotationValue"
+                  value={annotationValue.value}
+                  onChange={(e) => handleValueChange('value', e.target.value)}
+                  className="value-input multiline"
+                  rows={3}
+                  wrap="off"
+                  style={{
+                    resize: 'vertical',
+                    overflow: 'auto',
+                    whiteSpace: 'pre',
+                    fontFamily: annotationValue.fontFamily,
+                    fontWeight: annotationValue.fontBold ? 'bold' : 'normal',
+                    fontStyle: annotationValue.fontItalic ? 'italic' : 'normal',
+                    textDecoration: annotationValue.fontStrikethrough ? 'line-through' : 'none',
+                    color: annotationValue.fontColor,
+                    fontSize: `${annotationValue.fontSize}px`,
+                    backgroundColor: settings.backgroundColor === 'transparent' ? 'white' : settings.backgroundColor,
+                  }}
+                  placeholder="Enter annotation value"
+                />
               </div>
             </div>
           )}

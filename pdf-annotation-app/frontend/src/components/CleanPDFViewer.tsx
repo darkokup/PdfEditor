@@ -40,6 +40,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [showInsertPageDialog, setShowInsertPageDialog] = useState<boolean>(false); // Dialog for page insertion
   const [selectedAnnotations, setSelectedAnnotations] = useState<Set<string>>(new Set()); // Track selected annotation IDs
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false); // Dialog for delete confirmation
+  const [newlyAddedAnnotationId, setNewlyAddedAnnotationId] = useState<string | null>(null); // Track newly added annotation
+  const prevAnnotationsLengthRef = useRef(annotations.length); // Track previous annotation count
   
   // Track last annotation style for new annotations
   const [lastAnnotationStyle, setLastAnnotationStyle] = useState<Partial<Annotation>>({
@@ -162,6 +164,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       }
     };
   }, []); // Empty dependency array - only cleanup on unmount
+
+  // Detect when a new annotation is added and auto-select + edit it
+  useEffect(() => {
+    if (annotations.length > prevAnnotationsLengthRef.current) {
+      // New annotation was added - it should be the last one
+      const newAnnotation = annotations[annotations.length - 1];
+      if (newAnnotation) {
+        setNewlyAddedAnnotationId(newAnnotation.id);
+        setSelectedAnnotations(new Set([newAnnotation.id]));
+      }
+    }
+    prevAnnotationsLengthRef.current = annotations.length;
+  }, [annotations]);
 
   // Add scroll listener to update current page in continuous mode
   useEffect(() => {
@@ -757,6 +772,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                       onAnnotationSelect={handleAnnotationSelect}
                       onClearSelection={handleClearSelection}
                       onRemoveFromSelection={handleRemoveFromSelection}
+                      newlyAddedAnnotationId={newlyAddedAnnotationId}
+                      onClearNewlyAdded={() => setNewlyAddedAnnotationId(null)}
                     />
                   </div>
                 ))}
@@ -803,6 +820,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                 onAnnotationSelect={handleAnnotationSelect}
                 onClearSelection={handleClearSelection}
                 onRemoveFromSelection={handleRemoveFromSelection}
+                newlyAddedAnnotationId={newlyAddedAnnotationId}
+                onClearNewlyAdded={() => setNewlyAddedAnnotationId(null)}
               />
             </div>
           )}

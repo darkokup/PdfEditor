@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
-import DatePicker from 'react-datepicker';
 import { Annotation } from '../types';
-import 'react-datepicker/dist/react-datepicker.css';
 
 interface DraggableAnnotationProps {
   annotation: Annotation;
@@ -39,13 +37,6 @@ const DraggableAnnotation: React.FC<DraggableAnnotationProps> = ({
     }
   };
 
-  const handleDateChange = (date: Date | null) => {
-    if (date) {
-      onUpdate(annotation.id, { value: date.toLocaleDateString() });
-      setIsEditing(false);
-    }
-  };
-
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDelete(annotation.id);
@@ -66,28 +57,17 @@ const DraggableAnnotation: React.FC<DraggableAnnotationProps> = ({
       </button>
       
       {isEditing ? (
-        annotation.type === 'text' ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={annotation.value}
-            onChange={(e) => handleValueChange(e.target.value)}
-            onBlur={() => setIsEditing(false)}
-            onKeyPress={handleKeyPress}
-            className="annotation-input"
-            placeholder="Enter text"
-            aria-label="Text annotation input"
-          />
-        ) : (
-          <DatePicker
-            selected={new Date(annotation.value)}
-            onChange={handleDateChange}
-            onBlur={() => setIsEditing(false)}
-            autoFocus
-            dateFormat="MM/dd/yyyy"
-            className="annotation-input"
-          />
-        )
+        <input
+          ref={inputRef}
+          type="text"
+          value={annotation.value}
+          onChange={(e) => handleValueChange(e.target.value)}
+          onBlur={() => setIsEditing(false)}
+          onKeyPress={handleKeyPress}
+          className="annotation-input"
+          placeholder="Enter text"
+          aria-label="Text annotation input"
+        />
       ) : (
         <span className="annotation-content">
           {annotation.value}

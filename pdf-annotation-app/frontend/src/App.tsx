@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import CleanPDFViewer from './components/CleanPDFViewer';
 import SimplePDFDisplay from './components/SimplePDFDisplay';
-import ControlPalette from './components/ControlPalette';
 import ProjectManager from './components/ProjectManager';
 import FontLoader from './FontLoader';
 import { Annotation, ProjectData } from './types';
@@ -13,7 +12,6 @@ const App: React.FC = () => {
   const [pdfFilename, setPdfFilename] = useState<string>('');
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [currentProject, setCurrentProject] = useState<ProjectData | null>(null);
-  const [isAddingControl, setIsAddingControl] = useState<'text' | 'date' | null>(null);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -114,26 +112,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddText = () => {
-    setIsAddingControl('text');
-  };
-
-  const handleAddDate = () => {
-    setIsAddingControl('date');
-  };
-
   const handlePDFClick = (annotation: Omit<Annotation, 'id' | 'created_at'>) => {
-    if (isAddingControl) {
-      const newAnnotation = {
-        ...annotation,
-        type: isAddingControl,
-        value: isAddingControl === 'text' ? 'Enter text...' : new Date().toLocaleDateString(),
-      };
-      handleAnnotationAdd(newAnnotation);
-      setIsAddingControl(null);
-    } else {
-      handleAnnotationAdd(annotation);
-    }
+    handleAnnotationAdd(annotation);
   };
 
   const handleInsertPageBefore = async (pageIndex: number) => {
@@ -207,26 +187,12 @@ const App: React.FC = () => {
             onNewProject={handleNewProject}
           />
           
-          {pdfData && (
-            <ControlPalette 
-              onAddText={handleAddText}
-              onAddDate={handleAddDate}
-            />
-          )}
-          
           {currentProject && (
             <div className="project-info">
               <h4>Current Project</h4>
               <p><strong>File:</strong> {currentProject.pdf_filename}</p>
               <p><strong>Annotations:</strong> {annotations.length}</p>
               <p><strong>Created:</strong> {new Date(currentProject.created_at).toLocaleDateString()}</p>
-            </div>
-          )}
-          
-          {isAddingControl && (
-            <div className="add-control-mode">
-              <p>Click on the PDF to add a {isAddingControl} control</p>
-              <button onClick={() => setIsAddingControl(null)}>Cancel</button>
             </div>
           )}
         </aside>

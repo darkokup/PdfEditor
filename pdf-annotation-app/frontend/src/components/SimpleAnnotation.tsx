@@ -589,14 +589,14 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
           </button>
         )}
         
-        {/* Settings button - positioned at bottom right, only visible when selected */}
+        {/* Settings button - positioned below remove button with 3px gap, only visible when selected */}
         {isSelected && (
           <button 
             className="simple-settings-btn"
             style={{
               position: 'absolute',
-              bottom: `${-10 * scale}px`, // Align center with bottom edge
-              right: `${-23 * scale}px`, // Moved further right to avoid corner handle
+              top: `${Math.max(16, 18 * scale) + 3 - 10 * scale}px`, // Below remove button with 3px gap
+              right: `${-23 * scale}px`, // Aligned with remove button
               width: `${Math.max(16, 18 * scale)}px`, // Made bigger
               height: `${Math.max(16, 18 * scale)}px`, // Made bigger
               fontSize: `${Math.max(8, 10 * scale)}px`,
@@ -626,7 +626,7 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
             onKeyDown={handleEditKeyDown}
             onBlur={handleEditBlur}
             onClick={(e) => e.stopPropagation()}
-            className={`simple-annotation-text ${getTextClass()}`}
+            className={`simple-annotation-text simple-annotation-edit-textarea ${getTextClass()}`}
             style={{
               fontFamily: annotation.fontFamily || 'Arial',
               fontWeight: annotation.fontBold ? 'bold' : 'normal',
@@ -637,8 +637,6 @@ const SimpleAnnotation: React.FC<SimpleAnnotationProps> = ({
               border: '2px solid #007bff',
               outline: 'none',
               resize: 'none',
-              width: '100%',
-              height: '100%',
               padding: '2px 4px',
               boxSizing: 'border-box',
               background: 'white',

@@ -51,6 +51,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isBgColorDropdownOpen, setIsBgColorDropdownOpen] = useState(false);
   const [customBgColor, setCustomBgColor] = useState('#FFFFFF');
+  const [isExpandedEditorOpen, setIsExpandedEditorOpen] = useState(false);
+  const [expandedEditorValue, setExpandedEditorValue] = useState('');
   const [availableFonts, setAvailableFonts] = useState<string[]>([
     'Arial', 'Times New Roman', 'Courier New' // Default fallback fonts
   ]);
@@ -306,28 +308,31 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
           {/* Settings Tab */}
           {activeTab === 'settings' && (
             <div className="tab-content">
-              <div className="form-group">
-                <label htmlFor="width">Width (1-{calculateMaxWidth()}):</label>
-                <input
-                  type="number"
-                  id="width"
-                  min="1"
-                  max={calculateMaxWidth()}
-                  value={settings.width}
-                  onChange={(e) => handleInputChange('width', validateIntegerInput(e.target.value, 1, calculateMaxWidth()))}
-                />
-              </div>
+              {/* Width and Height in same row */}
+              <div className="form-group-inline">
+                <div>
+                  <label htmlFor="width">Width (1-{calculateMaxWidth()}):</label>
+                  <input
+                    type="number"
+                    id="width"
+                    min="1"
+                    max={calculateMaxWidth()}
+                    value={settings.width}
+                    onChange={(e) => handleInputChange('width', validateIntegerInput(e.target.value, 1, calculateMaxWidth()))}
+                  />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="height">Height (1-{calculateMaxHeight()}):</label>
-                <input
-                  type="number"
-                  id="height"
-                  min="1"
-                  max={calculateMaxHeight()}
-                  value={settings.height}
-                  onChange={(e) => handleInputChange('height', validateIntegerInput(e.target.value, 1, calculateMaxHeight()))}
-                />
+                <div>
+                  <label htmlFor="height">Height (1-{calculateMaxHeight()}):</label>
+                  <input
+                    type="number"
+                    id="height"
+                    min="1"
+                    max={calculateMaxHeight()}
+                    value={settings.height}
+                    onChange={(e) => handleInputChange('height', validateIntegerInput(e.target.value, 1, calculateMaxHeight()))}
+                  />
+                </div>
               </div>
 
               <div className="form-group">
@@ -346,8 +351,8 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                           <span 
                             style={{
                               display: 'inline-block',
-                              width: '25px',
-                              height: '16px',
+                              width: '32px',
+                              height: '18px',
                               backgroundColor: settings.backgroundColor,
                               border: '1px solid #ccc',
                               marginLeft: '8px',
@@ -401,110 +406,113 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Border Line:</label>
-                <div className="custom-image-dropdown" ref={borderDropdownRef}>
-                  <div 
-                    className="dropdown-selected"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  >
-                    <div className="selected-option">
-                      {settings.borderStyle === 'none' && (
+              {/* Border Line, Width, and Color in same row */}
+              <div className="form-group-border-row">
+                <div>
+                  <label>Border Line:</label>
+                  <div className="custom-image-dropdown" ref={borderDropdownRef}>
+                    <div 
+                      className="dropdown-selected"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    >
+                      <div className="selected-option">
+                        {settings.borderStyle === 'none' && (
+                          <svg width="80" height="16" viewBox="0 0 80 16">
+                            <text x="0" y="13" textAnchor="start" fontSize="13" fill="#000000">No Line</text>
+                          </svg>
+                        )}
+                        {settings.borderStyle === 'solid' && (
+                          <svg width="80" height="16" viewBox="0 0 80 16">
+                            <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2"/>
+                          </svg>
+                        )}
+                        {settings.borderStyle === 'dashed' && (
+                          <svg width="80" height="16" viewBox="0 0 80 16">
+                            <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="4,2"/>
+                          </svg>
+                        )}
+                        {settings.borderStyle === 'dotted' && (
+                          <svg width="80" height="16" viewBox="0 0 80 16">
+                            <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="1,2"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="dropdown-arrow">▼</span>
+                    </div>
+                    <div className={`dropdown-options ${isDropdownOpen ? 'open' : ''}`}>
+                      <div 
+                        className="dropdown-option"
+                        onClick={() => {
+                          handleInputChange('borderStyle', 'none');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
                         <svg width="80" height="16" viewBox="0 0 80 16">
-                          <text x="0" y="13" textAnchor="start" fontSize="13" fill="#000000">No Line</text>
+                          <text x="40" y="13" textAnchor="middle" fontSize="13" fill="#000000">No Line</text>
                         </svg>
-                      )}
-                      {settings.borderStyle === 'solid' && (
+                        <span className="dropdown-spacer"></span>
+                      </div>
+                      <div 
+                        className="dropdown-option"
+                        onClick={() => {
+                          handleInputChange('borderStyle', 'solid');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
                         <svg width="80" height="16" viewBox="0 0 80 16">
                           <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2"/>
                         </svg>
-                      )}
-                      {settings.borderStyle === 'dashed' && (
+                        <span className="dropdown-spacer"></span>
+                      </div>
+                      <div 
+                        className="dropdown-option"
+                        onClick={() => {
+                          handleInputChange('borderStyle', 'dashed');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
                         <svg width="80" height="16" viewBox="0 0 80 16">
                           <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="4,2"/>
                         </svg>
-                      )}
-                      {settings.borderStyle === 'dotted' && (
+                        <span className="dropdown-spacer"></span>
+                      </div>
+                      <div 
+                        className="dropdown-option"
+                        onClick={() => {
+                          handleInputChange('borderStyle', 'dotted');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
                         <svg width="80" height="16" viewBox="0 0 80 16">
                           <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="1,2"/>
                         </svg>
-                      )}
-                    </div>
-                    <span className="dropdown-arrow">▼</span>
-                  </div>
-                  <div className={`dropdown-options ${isDropdownOpen ? 'open' : ''}`}>
-                    <div 
-                      className="dropdown-option"
-                      onClick={() => {
-                        handleInputChange('borderStyle', 'none');
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <svg width="80" height="16" viewBox="0 0 80 16">
-                        <text x="40" y="13" textAnchor="middle" fontSize="13" fill="#000000">No Line</text>
-                      </svg>
-                      <span className="dropdown-spacer"></span>
-                    </div>
-                    <div 
-                      className="dropdown-option"
-                      onClick={() => {
-                        handleInputChange('borderStyle', 'solid');
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <svg width="80" height="16" viewBox="0 0 80 16">
-                        <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2"/>
-                      </svg>
-                      <span className="dropdown-spacer"></span>
-                    </div>
-                    <div 
-                      className="dropdown-option"
-                      onClick={() => {
-                        handleInputChange('borderStyle', 'dashed');
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <svg width="80" height="16" viewBox="0 0 80 16">
-                        <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="4,2"/>
-                      </svg>
-                      <span className="dropdown-spacer"></span>
-                    </div>
-                    <div 
-                      className="dropdown-option"
-                      onClick={() => {
-                        handleInputChange('borderStyle', 'dotted');
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <svg width="80" height="16" viewBox="0 0 80 16">
-                        <line x1="4" y1="8" x2="76" y2="8" stroke="#000000" strokeWidth="2" strokeDasharray="1,2"/>
-                      </svg>
-                      <span className="dropdown-spacer"></span>
+                        <span className="dropdown-spacer"></span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label htmlFor="borderColor">Border Color:</label>
-                <input
-                  type="color"
-                  id="borderColor"
-                  value={settings.borderColor}
-                  onChange={(e) => handleInputChange('borderColor', e.target.value)}
-                />
-              </div>
+                <div>
+                  <label htmlFor="borderWidth">Width (1-6):</label>
+                  <input
+                    type="number"
+                    id="borderWidth"
+                    min="1"
+                    max="6"
+                    value={settings.borderWidth}
+                    onChange={(e) => handleInputChange('borderWidth', validateIntegerInput(e.target.value, 1, 6))}
+                  />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="borderWidth">Border Line Width (1-10):</label>
-                <input
-                  type="number"
-                  id="borderWidth"
-                  min="1"
-                  max="10"
-                  value={settings.borderWidth}
-                  onChange={(e) => handleInputChange('borderWidth', validateIntegerInput(e.target.value, 1, 10))}
-                />
+                <div>
+                  <label htmlFor="borderColor">Color:</label>
+                  <input
+                    type="color"
+                    id="borderColor"
+                    value={settings.borderColor}
+                    onChange={(e) => handleInputChange('borderColor', e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -639,7 +647,20 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
               </div>
 
               <div className="form-group">
-                <label htmlFor="annotationValue">Value:</label>
+                <div className="value-label-row">
+                  <label htmlFor="annotationValue">Value:</label>
+                  <button
+                    type="button"
+                    className="expand-editor-btn"
+                    onClick={() => {
+                      setExpandedEditorValue(annotationValue.value);
+                      setIsExpandedEditorOpen(true);
+                    }}
+                    title="Expand editor"
+                  >
+                    ⤢
+                  </button>
+                </div>
                 <textarea
                   id="annotationValue"
                   value={annotationValue.value}
@@ -671,6 +692,59 @@ const AnnotationSettingsDialog: React.FC<AnnotationSettingsDialogProps> = ({
           <button className="btn-save" onClick={handleSave}>Save</button>
         </div>
       </div>
+
+      {/* Expanded Editor Dialog */}
+      {isExpandedEditorOpen && (
+        <div className="expanded-editor-overlay">
+          <div className="expanded-editor-dialog">
+            <div className="dialog-header">
+              <h3>Edit Value</h3>
+              <button 
+                className="dialog-close" 
+                onClick={() => setIsExpandedEditorOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="expanded-editor-content">
+              <textarea
+                value={expandedEditorValue}
+                onChange={(e) => setExpandedEditorValue(e.target.value)}
+                className="expanded-textarea"
+                wrap="off"
+                autoFocus
+                style={{
+                  fontFamily: annotationValue.fontFamily,
+                  fontWeight: annotationValue.fontBold ? 'bold' : 'normal',
+                  fontStyle: annotationValue.fontItalic ? 'italic' : 'normal',
+                  textDecoration: annotationValue.fontStrikethrough ? 'line-through' : 'none',
+                  color: annotationValue.fontColor,
+                  fontSize: `${annotationValue.fontSize}px`,
+                  backgroundColor: settings.backgroundColor === 'transparent' ? 'white' : settings.backgroundColor,
+                }}
+                placeholder="Enter annotation value"
+              />
+            </div>
+            <div className="dialog-actions">
+              <button 
+                className="btn-cancel" 
+                onClick={() => setIsExpandedEditorOpen(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-save" 
+                onClick={() => {
+                  handleValueChange('value', expandedEditorValue);
+                  setIsExpandedEditorOpen(false);
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

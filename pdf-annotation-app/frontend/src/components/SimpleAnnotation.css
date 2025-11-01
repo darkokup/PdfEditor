@@ -134,7 +134,7 @@
 /* Corner resize handles */
 .resize-handle-corner {
   border-radius: 50%; /* Make corners circular for distinction */
-  background-color: #0056b3; /* Slightly darker blue */
+  background-color: #007bff;
 }
 
 .resize-handle-top-left,
@@ -148,11 +148,21 @@
 }
 
 .resize-handle:hover {
-  background-color: #0056b3;
+  background-color: #003d82; /* Even darker on hover */
 }
 
 .resize-handle-corner:hover {
   background-color: #003d82; /* Even darker on hover */
+}
+
+/* Edit mode styles */
+.simple-annotation-edit-textarea {
+  position: absolute !important;
+  top: 4px !important;
+  left: 5px !important;
+  width: calc(100% - 10px) !important;
+  height: calc(100% - 8px) !important;
+  z-index: 1002 !important;
 }
 
 /* Dynamic positioning and sizing will still need inline styles */
